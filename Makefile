@@ -4,7 +4,7 @@ obj = $(ccsrc:.cc=.o) $(csrc:.c=.o)
 depfiles = $(obj:.o=.d)
 bin = sray
 
-opt = -O3 -ffast-math -march=pentium4 -msse -msse2 -mfpmath=sse
+opt = -O3 -ffast-math
 warn = -Wall -Wno-strict-aliasing
 dbg = -g
 #prof = -pg
@@ -24,7 +24,7 @@ endif
 
 # XXX work-arround for a bug in my cache manager implementation which
 # won't compile properly with thread-specific data on MacOSX at the moment.
-ifeq ($(shell uname -s),Darwin)
+ifeq ($(shell uname -s), Darwin)
 	def = -DNO_THREADS
 endif
 
