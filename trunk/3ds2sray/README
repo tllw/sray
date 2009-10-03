@@ -1,0 +1,7 @@
+3ds2sray converts 3d studio scenes to the sray XML scene description format
+
+Only handles meshes, point lights, and ignores all but the first camera.
+Also animation is not supported yet.
+
+usage example:
+$ ./3ds2sray foo.3ds >foo.xml
