@@ -2,6 +2,12 @@
 
 S-ray should compile and run on any UNIX system with an X display.
 
+= Getting the code =
+There's no official release at the moment, just grab the code from our subversion repository (obviously you need a subversion client for that):
+{{{
+$ svn co http://sray.googlecode.com/svn/trunk sray
+}}}
+
 = Dependencies =
   * GNU make
   * expat (http://expat.sourceforge.net)
@@ -23,4 +29,3 @@ In the s-ray source tree there are also some supporting tools that you can compi
   * `prev` is an interactive OpenGL scene file previewer.
   * `obj2sray` is a converter from Wavefront OBJ files to the native s-ray XML scene description.
   * `3ds2sray` is a converter from Autodesk 3DS files to the native s-ray XML scene description.
-
