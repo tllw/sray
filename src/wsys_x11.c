@@ -183,7 +183,11 @@ void wsys_updrect(int dst_x, int dst_y, int dst_xsz, int dst_ysz,
 
 void wsys_clear(void)
 {
+	/*
 	wsys_updrect(0, 0, ximg->width, ximg->height, 0, 0, 0, 0, 0);
+	*/
+
+	XClearWindow(dpy, win);
 }
 
 void wsys_set_key_func(void (*func)(int, int))
