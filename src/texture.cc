@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "texture.h"
+#include "datapath.h"
 
 Texture::Texture()
 {
@@ -25,7 +26,13 @@ Texture::Texture()
 
 bool Texture::load(const char *name)
 {
-	return img.load(name);
+	char path[512];
+
+	if(find_file(name, path, sizeof path) == -1) {
+		return false;
+	}
+
+	return img.load(path);
 }
 
 void Texture::set_filtering(TexFilter filter)

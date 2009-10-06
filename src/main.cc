@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cylinder.h"
 #include "tpool.h"
 #include "octree.h"
+#include "datapath.h"
 
 using namespace std;
 
@@ -121,6 +122,16 @@ bool init(int xsz, int ysz)
 
 	bool res;
 	if(opt.scenefile) {
+		char *lastslash, *fdir;
+		
+		fdir = (char*)alloca(strlen(opt.scenefile) + 1);
+		strcpy(fdir, opt.scenefile);
+
+		if((lastslash = strrchr(fdir, '/'))) {
+			*lastslash = 0;
+			add_path(fdir);
+		}
+
 		res = scn->load(opt.scenefile);
 	} else {
 		res = scn->load(stdin);
@@ -134,25 +145,9 @@ bool init(int xsz, int ysz)
 		cam = new Camera;
 		scn->set_camera(cam);
 	}
-
-	if(use_octree) {
-		int t0 = (int)floor(frame_time) - cam->get_shutter() / 2;
-		int t1 = t0 + cam->get_shutter();
-
-		if(opt.verb) {
-			printf("constructing octree (%d, %d)...\n", t0, t1);
-		}
-
-		scn->build_tree(t0, t1);
-	}
-
-	if(opt.caust_photons || opt.gi_photons) {
-		printf("building photon maps\n");
-		scn->build_photon_maps();
-	}
-
+	
 	// restore photon dumps if available
-	char dumpfile[64];
+	/*char dumpfile[64];
 	sprintf(dumpfile, "%s.cdump", opt.scenefile ? opt.scenefile : "scene");
 	PhotonMap *cmap = scn->get_caust_map();
 	cmap->restore(dumpfile);
@@ -162,6 +157,7 @@ bool init(int xsz, int ysz)
 	PhotonMap *gmap = scn->get_gi_map();
 	gmap->restore(dumpfile);
 	opt.gi_photons = gmap->size();
+	*/
 
 	return true;
 }
@@ -223,6 +219,23 @@ void keyb(int key, int state)
 
 void render(void)
 {
+	if(use_octree) {
+		int t0 = (int)floor(frame_time) - cam->get_shutter() / 2;
+		int t1 = t0 + cam->get_shutter();
+
+		if(opt.verb) {
+			printf("constructing octree (%d, %d)...\n", t0, t1);
+		}
+
+		scn->build_tree(t0, t1);
+	}
+
+	if(opt.caust_photons || opt.gi_photons) {
+		printf("building photon maps\n");
+		scn->build_photon_maps();
+	}
+
+
 	for(int i=0; i<fb.xsz * fb.ysz; i++) {
 		fb.pixels[i] = Color(0, 0, 0, 0);
 	}
