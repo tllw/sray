@@ -73,7 +73,6 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	gettimeofday(&tv0, 0);
 	render();
 
 	wsys_main_loop();
@@ -104,6 +103,10 @@ bool init(int xsz, int ysz)
 	}
 
 	fb.create(xsz, ysz);
+
+	for(int i=0; i<fb.xsz * fb.ysz; i++) {
+		fb.pixels[i] = Color(0, 0, 0, 0);
+	}
 
 #ifndef NO_DBG_IMG
 	dbg_img_hist.create(xsz, ysz);
@@ -219,10 +222,13 @@ void keyb(int key, int state)
 
 void render(void)
 {
-	if(use_octree) {
-		int t0 = (int)floor(frame_time) - cam->get_shutter() / 2;
-		int t1 = t0 + cam->get_shutter();
+	// start timer
+	gettimeofday(&tv0, 0);
 
+	int t0 = (int)floor(frame_time) - cam->get_shutter() / 2;
+	int t1 = t0 + cam->get_shutter();
+
+	if(use_octree) {
 		if(opt.verb) {
 			printf("constructing octree (%d, %d)...\n", t0, t1);
 		}
@@ -232,13 +238,13 @@ void render(void)
 
 	if(opt.caust_photons || opt.gi_photons) {
 		printf("building photon maps\n");
-		scn->build_photon_maps();
+		scn->build_photon_maps(t0, t1);
 	}
 
 
-	for(int i=0; i<fb.xsz * fb.ysz; i++) {
+	/*for(int i=0; i<fb.xsz * fb.ysz; i++) {
 		fb.pixels[i] = Color(0, 0, 0, 0);
-	}
+	}*/
 
 	wsys_clear();
 
@@ -286,6 +292,8 @@ void render_block(struct block *blk)
 	for(int y=0; y<blk->ysz; y++) {
 		for(int x=0; x<blk->xsz; x++) {
 			int i = 0;
+
+			img[x].x = img[x].y = img[x].z = img[x].w = 0.0;
 			
 			while(i < opt.max_samples) {
 				Ray ray = cam->get_primary_ray(x + blk->x, y + blk->y, i, ftime);
@@ -337,6 +345,9 @@ void read_func(int fd)
 	p = get_work_status(&done, &max);
 	if(done == max - 1) {
 		wait_frame();
+
+		// this helps empty the event queue (will run all block_dones).
+		wsys_process_events();
 
 		if(opt.verb) {
 			printf(" done\n");
