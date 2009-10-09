@@ -346,7 +346,6 @@ struct LightPower {
 
 bool Scene::build_photon_maps(int t0, int t1)
 {
-	printf("build_photon_maps(%d, %d)\n", t0, t1);
 	if(lights.empty() || (!opt.caust_photons && !opt.gi_photons)) {
 		return false;
 	}
