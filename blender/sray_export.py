@@ -39,6 +39,14 @@ def export(fname):
 			write_xform(file, obj)
 			write_mesh(file, odata)
 			file.write("\t</object>\n")
+
+		if obj.type == 'Lamp':
+			r = odata.col.x
+			g = odata.col.y
+			b = odata.col.z
+			file.write("\t<light name=\"%s\" type=\"point\" color=\"%f %f %f\">\n" % (obj.name, r, g, b))
+			write_xform(file, obj)
+			file.write("\t</light>\n")
 			
 	file.write("</scene>\n")
 
