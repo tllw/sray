@@ -133,10 +133,6 @@ bool Mesh::load_xml(struct xml_node *node)
 				v.tex = Vector2(0, 0);
 			} else {
 				v.tex = velem[EL_TEXCOORD][faceref[i].tex_idx[j]].v;
-
-				// fix negative texture coordinates so that we don't have to check during lookups
-				while(v.tex.x < 0.0) v.tex.x += 1.0;
-				while(v.tex.y < 0.0) v.tex.y += 1.0;
 			}
 
 			tri.v[j] = v;
