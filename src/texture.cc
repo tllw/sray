@@ -74,6 +74,9 @@ Color Texture::lookup(const Vector2 &tc, unsigned int time) const
 	case TEX_WRAP_REPEAT:
 		tx %= img.xsz;
 		ty %= img.ysz;
+
+		if(tx < 0) tx += img.xsz;
+		if(ty < 0) ty += img.ysz;
 		break;
 	}
 
