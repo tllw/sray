@@ -13,8 +13,7 @@ __version__ = "0.001"
 import math
 import Blender
 from Blender import Mathutils
-from Blender import Texture,Image,Material
-
+from Blender import Texture,Image,Material,Ipo
 
 class Triangle:
 	__slots__ = 'vidx', 'tc'
@@ -27,6 +26,13 @@ def export(fname):
 
 	print "-- sray exporter version", __version__
 	print "exporting scene ->", fname
+
+	fps = scene.getRenderingContext().framesPerSec()
+	anim_start = Blender.Get('staframe') / fps
+	anim_end = Blender.Get('endframe') / fps
+
+	print "fps: ", fps
+	print "animation: ", anim_start, "->", anim_end
 	
 	try:
 		file = open(fname, "w")
@@ -37,6 +43,7 @@ def export(fname):
 	file.write("\t<!-- Exported from blender by sray_export.py (sray exporter) version %s -->\n" % __version__)
 	file.write("\t<!-- The sray exporter is part of the s-ray renderer project: http://code.google.com/p/sray -->\n")
 
+	# write all materials
 	for obj in scene.objects:
 		if obj.type == 'Mesh':
 			mesh = obj.getData(mesh = True)
@@ -53,28 +60,38 @@ def export(fname):
 			else:
 				file.write("\t<material name=\"%s\" shader=\"phong\"/>\n")
 
-	
+	# export meshes, lights, and cameras
 	for obj in scene.objects:
-		odata = obj.getData(mesh = True)
-		
 		if obj.type == 'Mesh':
-			file.write("\t<object name=\"%s\" type=\"mesh\">\n" % obj.name)
-			file.write("\t\t<matref name=\"%s\"/>\n" % (obj.name + ".mat"))
-			write_xform(file, obj)
-			write_mesh(file, odata)
-			file.write("\t</object>\n")
+			write_object(file, obj)
 
 		if obj.type == 'Lamp':
-			write_light(file, obj, odata)
+			write_light(file, obj)
 
 		if obj.type == 'Camera':
-			write_cam(file, obj, odata)
+			write_cam(file, obj)
 			
 	file.write("</scene>\n")
 
+def write_object(file, obj):
+	print "- object:", obj.name
+	mesh = obj.getData(mesh = True)
+
+	file.write("\t<object name=\"%s\" type=\"mesh\">\n" % obj.name)
+	file.write("\t\t<matref name=\"%s\"/>\n" % (obj.name + ".mat"))
+
+	ipo = obj.getIpo()
+	if ipo == None:
+		write_xform(file, obj)
+	else:
+		write_anim(file, ipo)
+	
+	write_mesh(file, mesh)
+	file.write("\t</object>\n")
 			
 # might want to add time ...
 def write_xform(file, obj, rot=False):
+	print "\txform"
 	# might want to use those repetedly with "worldpsace" arg to export anim
 	x, y, z = obj.getLocation()
 	#q = obj.getEuler().toQuat() # this gives me bollocks for some reason
@@ -98,6 +115,58 @@ def write_xform(file, obj, rot=False):
 	#file.write("\t\t<!-- %.3f %.3f %.3f -->\n" % (m[0][0], m[0][1], m[0][2]))
 	#file.write("\t\t<!-- %.3f %.3f %.3f -->\n" % (m[1][0], m[1][1], m[1][2]))
 	#file.write("\t\t<!-- %.3f %.3f %.3f -->\n" % (m[2][0], m[2][1], m[2][2]))
+
+def write_anim(file, ipo, rot=False):
+	print "\tanim"
+
+	scn = Blender.Scene.GetCurrent()
+	fps = scn.getRenderingContext().framesPerSec()
+	anim_start = Blender.Get('staframe') / fps
+	anim_end = Blender.Get('endframe') / fps
+
+	curve_posx = ipo[Ipo.OB_LOCX]
+	curve_posy = ipo[Ipo.OB_LOCY]
+	curve_posz = ipo[Ipo.OB_LOCZ]
+	curve_rotx = ipo[Ipo.OB_ROTX]
+	curve_roty = ipo[Ipo.OB_ROTY]
+	curve_rotz = ipo[Ipo.OB_ROTZ]
+	curve_sclx = ipo[Ipo.OB_SCALEX]
+	curve_scly = ipo[Ipo.OB_SCALEY]
+	curve_sclz = ipo[Ipo.OB_SCALEZ]
+
+	anim_dur = anim_end - anim_start
+	sam_per_sec = 1.0
+	num_samples = anim_dur / sam_per_sec
+	t = anim_start
+	dt = 1.0 / sam_per_sec
+
+	print "anim_dur =", anim_dur
+	print "num_samples =", num_samples
+
+	for i in range(int(num_samples)):
+		frame = t * fps
+		x = curve_posx[frame]
+		y = curve_posy[frame]
+		z = curve_posz[frame]
+		rx = curve_rotx[frame]
+		ry = curve_roty[frame]
+		rz = curve_rotz[frame]
+		sx = curve_sclx[frame]
+		sy = curve_scly[frame]
+		sz = curve_sclz[frame]
+
+		m = Mathutils.Euler(rx * 10.0, ry * 10.0, rz * 10.0).toMatrix()
+
+		if rot:
+			rmat = Mathutils.Matrix([1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1])
+			m = rmat * m
+		q = m.toQuat()
+
+		print "animation sample", t, "->", z
+		file.write("\t\t<xform time=\"%d\" pos=\"%f %f %f\" rot=\"%f %f %f %f\" scale=\"%f %f %f\"/>\n" %
+				(int(t * 1000.0), x, z, y, q.w, q.x, q.z, q.y, sx, sz, sy))
+		t += dt
+
 
 def write_material(file, mat, name, diff_tex = None):
 	texlist = mat.getTextures()
@@ -202,7 +271,9 @@ def write_mesh(file, m):
 def rad2deg(x):
 	return 180.0 * x / math.pi 
 
-def write_cam(file, obj, cam):
+def write_cam(file, obj):
+	print "- camera:", obj.name
+	cam = obj.getData()
 	fov = rad2deg(math.atan(16.0 / cam.lens) * 2.0) / 1.333333
 
 	file.write("\t<camera name=\"%s\" type=\"free\" fov=\"%.3f\">\n" % (cam.name, fov))
@@ -210,7 +281,10 @@ def write_cam(file, obj, cam):
 	file.write("\t</camera>\n")
 
 
-def write_light(file, obj, lt):
+def write_light(file, obj):
+	print "- light:", obj.name
+	lt = obj.getData()
+
 	r = lt.col[0]
 	g = lt.col[1]
 	b = lt.col[2]
