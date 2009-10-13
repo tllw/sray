@@ -80,6 +80,7 @@ bool XFormNode::load_xml(struct xml_node *node)
 	}
 	if((attr = xml_get_attr(node, "rot")) && attr->type == ATYPE_VEC) {
 		Quaternion quat(attr->vval[0], attr->vval[1], attr->vval[2], attr->vval[3]);
+		quat.normalize();
 		set_rotation(quat, msec);
 	}
 	if((attr = xml_get_attr(node, "axisrot")) && attr->type == ATYPE_VEC) {
