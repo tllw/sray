@@ -58,6 +58,9 @@ bool show_lights = true;
 bool show_projmaps;
 float normal_scale_factor = 0.5;
 
+int frame_time;
+bool in_time_change;
+
 PhotonMap *pmap = 0;
 int pjmap_idx;
 
@@ -128,7 +131,7 @@ static void disp()
 
 		for(int i=0; i<num_obj; i++) {
 			glPushMatrix();
-			Matrix4x4 xform = obj[i]->get_xform_matrix();
+			Matrix4x4 xform = obj[i]->get_xform_matrix(frame_time);
 			mult_glmatrix(xform);
 
 			if(use_material_color) {		
@@ -176,7 +179,7 @@ static void disp()
 			/* draw projection maps */
 			if(show_projmaps && pmap) {
 				ProjMap *pjmap = pjmap_idx ? lt[i]->get_projmap() : lt[i]->get_spec_projmap();
-				Vector3 ltpos = lt[i]->get_position();
+				Vector3 ltpos = lt[i]->get_position(frame_time);
 
 				glPushAttrib(GL_POLYGON_BIT);
 
@@ -235,6 +238,38 @@ static void disp()
 		glEnd();
 
 		glDisable(GL_BLEND);
+	}
+
+	if(in_time_change) {
+		char buf[32], *ptr;
+
+		sprintf(buf, "time: %.2fs\n", (float)frame_time / 1000.0);
+
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glPushAttrib(GL_POLYGON_BIT);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		glRasterPos3f(-0.99, -0.95, 0);
+
+		glColor3f(1, 1, 0);
+
+		ptr = buf;
+		while(*ptr) {
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *ptr++);
+		}
+
+		glPopAttrib();
+
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
 	}
 
 	first_run = false;
@@ -311,7 +346,7 @@ static void draw_cylinder(const Cylinder *cyl)
 
 static void draw_light(const Light *lt)
 {
-	Matrix4x4 xform = lt->get_xform_matrix();
+	Matrix4x4 xform = lt->get_xform_matrix(frame_time);
 	Vector3 pos = Vector3(0, 0, 0).transformed(xform);
 
 	glColor3f(1.0, 1.0, 0.0);
@@ -359,8 +394,8 @@ static void draw_camera(const Camera *cam)
 	const TargetCamera *tcam;
 
 	if((tcam = dynamic_cast<const TargetCamera*>(cam))) {
-		Vector3 pos = tcam->get_position();
-		Vector3 targ = tcam->get_target();
+		Vector3 pos = tcam->get_position(frame_time);
+		Vector3 targ = tcam->get_target(frame_time);
 		dist = (targ - pos).length();
 	}
 
@@ -375,7 +410,7 @@ static void draw_camera(const Camera *cam)
 
 	glPushMatrix();
 
-	Matrix4x4 xform = cam->get_matrix();
+	Matrix4x4 xform = cam->get_matrix(frame_time);
 	mult_glmatrix(xform);
 	glScalef(dist, dist, dist);
 
@@ -567,13 +602,20 @@ static void keyb(unsigned char key, int x, int y)
 }
 
 static int bnstate[16];
+static bool modkeys;
 
 static int prev_x = -1, prev_y;
 static void mouse(int bn, int state, int x, int y)
 {
 	bnstate[bn] = state == GLUT_DOWN ? 1 : 0;
+	modkeys = glutGetModifiers();
 
 	if(state == GLUT_DOWN) {
+		if(bn == 0 && (modkeys & GLUT_ACTIVE_SHIFT)) {
+			in_time_change = true;
+			glutPostRedisplay();
+		}
+
 		if(bn == 3) {
 			cam_zoom(-10);
 			glutPostRedisplay();
@@ -585,6 +627,10 @@ static void mouse(int bn, int state, int x, int y)
 			prev_y = y;
 		}
 	} else {
+		if(bn == 0 && in_time_change) {
+			in_time_change = false;
+			glutPostRedisplay();
+		}
 		prev_x = -1;
 	}
 
@@ -593,7 +639,11 @@ static void mouse(int bn, int state, int x, int y)
 static void motion(int x, int y)
 {
 	if(bnstate[0]) {
-		cam_rotate(x - prev_x, y - prev_y);
+		if(modkeys & GLUT_ACTIVE_SHIFT) {
+			frame_time += (x - prev_x) * 10;
+		} else{
+			cam_rotate(x - prev_x, y - prev_y);
+		}
 		glutPostRedisplay();
 	}
 	if(bnstate[1]) {

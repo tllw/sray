@@ -145,26 +145,47 @@ def write_anim(file, ipo, rot=False):
 
 	for i in range(int(num_samples)):
 		frame = t * fps
-		x = curve_posx[frame]
-		y = curve_posy[frame]
-		z = curve_posz[frame]
-		rx = curve_rotx[frame]
-		ry = curve_roty[frame]
-		rz = curve_rotz[frame]
-		sx = curve_sclx[frame]
-		sy = curve_scly[frame]
-		sz = curve_sclz[frame]
 
-		m = Mathutils.Euler(rx * 10.0, ry * 10.0, rz * 10.0).toMatrix()
+		have_pos = have_rot = have_scl = False
 
-		if rot:
-			rmat = Mathutils.Matrix([1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1])
-			m = rmat * m
-		q = m.toQuat()
+		if curve_posx != None and curve_posy != None and curve_posz != None:
+			have_pos = True
+			x = curve_posx[frame]
+			y = curve_posy[frame]
+			z = curve_posz[frame]
+		if curve_rotx != None and curve_roty != None and curve_rotz != None:
+			have_rot = True
+			rx = curve_rotx[frame]
+			ry = curve_roty[frame]
+			rz = curve_rotz[frame]
+		if curve_sclx != None and curve_scly != None and curve_rotz != None:
+			have_scl = True
+			sx = curve_sclx[frame]
+			sy = curve_scly[frame]
+			sz = curve_sclz[frame]
 
-		print "animation sample", t, "->", z
-		file.write("\t\t<xform time=\"%d\" pos=\"%f %f %f\" rot=\"%f %f %f %f\" scale=\"%f %f %f\"/>\n" %
-				(int(t * 1000.0), x, z, y, q.w, q.x, q.z, q.y, sx, sz, sy))
+		if have_pos == False and have_rot == False and have_scl == False:
+			return False
+
+		file.write("\t\t<xform time=\"%d\"" % int(t * 1000.0))
+
+		if have_pos:
+			file.write(" pos=\"%f %f %f\"" % (x, z, y))
+
+		if have_rot:
+			m = Mathutils.Euler(rx * 10.0, ry * 10.0, rz * 10.0).toMatrix()
+
+			if rot:
+				rmat = Mathutils.Matrix([1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1])
+				m = rmat * m
+			q = m.toQuat()
+
+			file.write(" rot=\"%f %f %f %f\"" % (q.w, q.x, q.z, q.y))
+
+		if have_scl:
+			file.write(" scale=\"%f %f %f\"" % (sx, sz, sy))
+
+		file.write("/>\n")
 		t += dt
 
 

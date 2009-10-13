@@ -223,10 +223,15 @@ bool PhotonMap::restore(const char *fname)
 	int count = 0;
 	for(;;) {
 		Vector3 pos, dir, col, norm;
+		float x, y, z, dx, dy, dz, nx, ny, nz, cx, cy, cz;
 		
 		int res = fscanf(fp, "<%f %f %f> <%f %f %f> <%f %f %f> <%f %f %f>\n",
-				&pos.x, &pos.y, &pos.z, &dir.x, &dir.y, &dir.z,
-				&norm.x, &norm.y, &norm.z, &col.x, &col.y, &col.z);
+				&x, &y, &z, &dx, &dy, &dz, &nx, &ny, &nz, &cx, &cy, &cz);
+		pos = Vector3(x, y, z);
+		dir = Vector3(dx, dy, dz);
+		norm = Vector3(nx, ny, nz);
+		col = Vector3(cx, cy, cz);
+
 		if(res == EOF) break;
 		if(res < 12) {
 			fprintf(stderr, "failed to restore photon dump: %s\n", fname);
