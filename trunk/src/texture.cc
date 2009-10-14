@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Texture::Texture()
 {
-	filter = TEX_FILTER_NEAREST;
+	filter = TEX_FILTER_LINEAR;
 	wrap = TEX_WRAP_REPEAT;
 }
 
@@ -65,6 +65,22 @@ Color Texture::lookup(const Vector2 &tc, unsigned int time) const
 	int tx = tc4.x * img.xsz;
 	int ty = tc4.y * img.ysz;
 
+	switch(filter) {
+	case TEX_FILTER_NEAREST:
+		return get_texel(tx, ty);
+
+	case TEX_FILTER_LINEAR:
+		return (get_texel(tx, ty) + get_texel(tx + 1, ty) + get_texel(tx - 1, ty) +
+			get_texel(tx, ty + 1) + get_texel(tx, ty - 1)) / 5.0;
+
+	default:
+		break;
+	}
+	return Color(0, 0, 0);
+}
+
+Color Texture::get_texel(int tx, int ty) const
+{
 	switch(wrap) {
 	case TEX_WRAP_CLAMP:
 		tx = CLAMP(tx, 0, img.xsz);

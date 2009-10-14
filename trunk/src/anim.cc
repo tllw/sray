@@ -70,6 +70,26 @@ bool XFormNode::load_xml(struct xml_node *node)
 	struct xml_attr *attr;
 	int msec = 0;
 
+	if((attr = xml_get_attr(node, "interpolate"))) {
+		if(strcmp(attr->str, "linear") == 0) {
+			set_interpolator(INTERP_LINEAR);
+		} else if(strcmp(attr->str, "step") == 0) {
+			set_interpolator(INTERP_STEP);
+		} else if(strcmp(attr->str, "cubic") == 0) {
+			set_interpolator(INTERP_CUBIC);
+		}
+	}
+
+	if((attr = xml_get_attr(node, "extrapolate"))) {
+		if(strcmp(attr->str, "clamp") == 0) {
+			set_extrapolator(EXTRAP_CLAMP);
+		} else if(strcmp(attr->str, "repeat") == 0) {
+			set_extrapolator(EXTRAP_REPEAT);
+		} else if(strcmp(attr->str, "pingpong") == 0) {
+			set_extrapolator(EXTRAP_PINGPONG);
+		}
+	}
+
 	if((attr = xml_get_attr(node, "time")) && attr->type == ATYPE_INT) {
 		msec = attr->ival;
 	}

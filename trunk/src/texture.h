@@ -40,6 +40,8 @@ private:
 	TexFilter filter;
 	TexWrap wrap;
 
+	Color get_texel(int tx, int ty) const;
+
 public:
 	Texture();
 

@@ -28,7 +28,7 @@ static Camera *load_camera(struct xml_node *node);
 
 static Scene *cur_scene;
 
-double Scene::epsilon = ERROR_MARGIN;
+double Scene::epsilon = SMALL_NUMBER;//ERROR_MARGIN;
 
 void set_scene(Scene *scn)
 {
@@ -549,6 +549,11 @@ bool Scene::trace_caustics_photon(const Ray &inray, Photon *phot) const
 		}
 
 		double ior = inray.calc_ior(entering, mat_ior);
+
+		// if we have a normal map, grab the normal from there.
+		if(mat->have_attribute("normal")) {
+			normal = get_bump_normal(inray, sp, mat->get_attribute("normal"));
+		}
 
 		double ray_dot_n = dot_product(-inray.dir / ray_mag, normal);
 		double sqrt_fres_0 = refr > 0.0 ? (ior - 1) / (ior + 1) : 1.0;
