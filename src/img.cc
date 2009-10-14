@@ -32,11 +32,15 @@ Image::~Image()
 bool Image::create(int xsz, int ysz)
 {
 	Color *newpix;
-
-	if(!(newpix = (Color*)malloc(xsz * ysz * sizeof *newpix))) {
+	
+	try {
+		newpix = new Color[xsz * ysz];
+	}
+	catch(std::bad_alloc e) {
 		return false;
 	}
-	free(this->pixels);
+
+	delete [] this->pixels;
 	this->pixels = newpix;
 	this->xsz = xsz;
 	this->ysz = ysz;
@@ -46,7 +50,7 @@ bool Image::create(int xsz, int ysz)
 
 void Image::destroy()
 {
-	free(pixels);
+	delete [] pixels;
 }
 
 bool Image::load(const char *fname)
@@ -54,12 +58,22 @@ bool Image::load(const char *fname)
 	set_image_option(IMG_OPT_FLOAT, 1);
 	set_image_option(IMG_OPT_ALPHA, 1);
 
-	Color *newpix;
-	if(!(newpix = (Color*)load_image(fname, &xsz, &ysz))) {
+	float *imgbuf;
+	if(!(imgbuf = (float*)load_image(fname, &xsz, &ysz))) {
 		return false;
 	}
 
-	free(pixels);
+	Color *newpix = new Color[xsz * ysz];
+
+	for(int i=0; i<xsz * ysz; i++) {
+		newpix[i].x = imgbuf[i * 4];
+		newpix[i].y = imgbuf[i * 4 + 1];
+		newpix[i].z = imgbuf[i * 4 + 2];
+		newpix[i].w = imgbuf[i * 4 + 3];
+	}
+	free_image(imgbuf);
+
+	delete [] pixels;
 	pixels = newpix;
 	return true;
 }
@@ -69,9 +83,20 @@ bool Image::save(const char *fname, bool alpha) const
 	set_image_option(IMG_OPT_ALPHA, alpha ? 1 : 0);
 	set_image_option(IMG_OPT_FLOAT, 1);
 
-	if(save_image(fname, pixels, xsz, ysz, IMG_FMT_AUTO) == -1) {
+	float *imgbuf = new float[xsz * ysz * 4];
+	for(int i=0; i<xsz * ysz; i++) {
+		imgbuf[i * 4] = pixels[i].x;
+		imgbuf[i * 4 + 1] = pixels[i].y;
+		imgbuf[i * 4 + 2] = pixels[i].z;
+		imgbuf[i * 4 + 3] = pixels[i].w;
+	}
+
+	if(save_image(fname, imgbuf, xsz, ysz, IMG_FMT_AUTO) == -1) {
+		delete [] imgbuf;
 		return false;
 	}
+
+	delete [] imgbuf;
 	return true;
 }
 

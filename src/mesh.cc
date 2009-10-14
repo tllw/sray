@@ -154,10 +154,12 @@ bool Triangle::intersect(const Ray &ray, SurfPoint *sp) const
 		sp->texcoord = v.tex;
 
 		if(v.norm.length_sq() < XSMALL_NUMBER) {
-			sp->normal = normal.normalized();
+			sp->normal = normal;//.normalized();
 		} else {
-			sp->normal = v.norm.normalized();
+			sp->normal = v.norm;//.normalized();
 		}
+
+		sp->tangent = v.tang;
 	}
 	return true;
 }
@@ -328,7 +330,9 @@ static void interp_face(Vertex *interp, const Triangle &tri, const Vector3 &ispo
 	double nx00, nx10, nx01, nx11, nx0, nx1;
 	double ny00, ny10, ny01, ny11, ny0, ny1;
 	double nz00, nz10, nz01, nz11, nz0, nz1;
-	/* TODO also do tangent */
+	double gx00, gx10, gx01, gx11, gx0, gx1;
+	double gy00, gy10, gy01, gy11, gy0, gy1;
+	double gz00, gz10, gz01, gz11, gz0, gz1;
 
 	p00 = tri.v[0].pos;
 	p10 = tri.v[1].pos;
@@ -341,6 +345,10 @@ static void interp_face(Vertex *interp, const Triangle &tri, const Vector3 &ispo
 	nx00 = tri.v[0].norm.x; ny00 = tri.v[0].norm.y; nz00 = tri.v[0].norm.z;
 	nx10 = tri.v[1].norm.x; ny10 = tri.v[1].norm.y; nz10 = tri.v[1].norm.z;
 	nx01 = nx11 = tri.v[2].norm.x; ny01 = ny11 = tri.v[2].norm.y; nz01 = nz11 = tri.v[2].norm.z;
+	
+	gx00 = tri.v[0].tang.x; gy00 = tri.v[0].tang.y; gz00 = tri.v[0].tang.z;
+	gx10 = tri.v[1].tang.x; gy10 = tri.v[1].tang.y; gz10 = tri.v[1].tang.z;
+	gx01 = gx11 = tri.v[2].tang.x; gy01 = gy11 = tri.v[2].tang.y; gz01 = gz11 = tri.v[2].tang.z;
 
 	pa = (p00 - p10) + (p11 - p01);
 	pb = p10 - p00;
@@ -422,4 +430,16 @@ static void interp_face(Vertex *interp, const Triangle &tri, const Vector3 &ispo
 	nz0 = LERP(nz00, nz01, res.y);
 	nz1 = LERP(nz10, nz11, res.y);
 	interp->norm.z = LERP(nz0, nz1, res.x);
+
+	gx0 = LERP(gx00, gx01, res.y);
+	gx1 = LERP(gx10, gx11, res.y);
+	interp->tang.x = LERP(gx0, gx1, res.x);
+
+	gy0 = LERP(gy00, gy01, res.y);
+	gy1 = LERP(gy10, gy11, res.y);
+	interp->tang.y = LERP(gy0, gy1, res.x);
+
+	gz0 = LERP(gz00, gz01, res.y);
+	gz1 = LERP(gz10, gz11, res.y);
+	interp->tang.z = LERP(gz0, gz1, res.x);
 }

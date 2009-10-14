@@ -133,8 +133,14 @@ Color shade_phong(const Ray &ray, const SurfPoint &sp, const Material *mat)
 	double mat_ior = mat->get_value("ior", sp.texcoord, ray.time);
 	double ior = ray.calc_ior(entering, mat_ior);
 
+	// if we have a normal map, grab the normal from there.
+	if(mat->have_attribute("normal")) {
+		normal = get_bump_normal(ray, sp, mat->get_attribute("normal"));
+	}
+
 	// Direct illumination: accumulate radiance from all light sources
-	Color diff = scn->get_env_ambient() * kd, spec(0, 0, 0, 1.0);
+	Color diff = scn->get_env_ambient() * kd;
+	Color spec(0, 0, 0, 1.0);
 
 	int num_lt = scn->get_light_count();
 	for(int i=0; i<num_lt; i++) {
@@ -282,4 +288,30 @@ double fresnel(double r, double cosa)
 	double inv_cosa_sq = SQ(inv_cosa);
 
 	return r + (1.0 - r) * inv_cosa_sq * inv_cosa_sq * inv_cosa;
+}
+
+Vector3 get_bump_normal(const Ray &ray, const SurfPoint &sp, const MatAttrib &attr)
+{
+	Vector3 normal = sp.normal;
+	
+	if(attr.tex) {
+		//Color norm_col = mat->get_color("normal", sp.texcoord, ray.time);
+		Color norm_col = attr.tex->lookup(sp.texcoord, ray.time);
+		Vector3 n = norm_col * 2.0 - 1.0;
+
+		n.x *= attr.col.x;
+		n.y *= attr.col.x;
+
+		n.normalize();
+		Vector3 bitan = cross_product(normal, sp.tangent);
+
+		// transform the normal to world space
+		Matrix3x3 tbn(sp.tangent.x, sp.tangent.y, sp.tangent.z,
+				bitan.x, bitan.y, bitan.z,
+				normal.x, normal.y, normal.z);
+
+		normal = n.transformed(tbn.transposed());
+	}
+
+	return normal;
 }

@@ -25,6 +25,7 @@ struct VertexElement {
 struct FaceRef {
 	int vert_idx[3];
 	int norm_idx[3];
+	int tang_idx[3];
 	int tex_idx[3];
 };
 
@@ -32,6 +33,7 @@ enum {
 	EL_VERTEX,
 	EL_NORMAL,
 	EL_TEXCOORD,
+	EL_TANGENT,
 
 	NUM_VERTEX_ELEM
 };
@@ -40,6 +42,7 @@ static const char *velem_name[] = {
 	"vertex",
 	"normal",
 	"texcoord",
+	"tangent",
 	0
 };
 
@@ -68,7 +71,7 @@ bool Mesh::load_xml(struct xml_node *node)
 		return false;
 	}
 
-	bool ordered[NUM_VERTEX_ELEM] = {true, true, true};
+	bool ordered[NUM_VERTEX_ELEM] = {true, true, true, true};
 	int cur_idx[NUM_VERTEX_ELEM] = {0};
 
 	std::vector<VertexElement> velem[NUM_VERTEX_ELEM];
@@ -82,6 +85,7 @@ bool Mesh::load_xml(struct xml_node *node)
 		case EL_VERTEX:
 		case EL_NORMAL:
 		case EL_TEXCOORD:
+		case EL_TANGENT:
 			{
 				VertexElement elem;
 				read_vertex_element(&elem, node, cur_idx[elem_idx]);
@@ -127,6 +131,12 @@ bool Mesh::load_xml(struct xml_node *node)
 				v.norm = Vector3(0, 0, 0);
 			} else {
 				v.norm = velem[EL_NORMAL][faceref[i].norm_idx[j]].v;
+			}
+
+			if(velem[EL_NORMAL].empty()) {
+				v.tang = Vector3(0, 0, 0);
+			} else {
+				v.tang = velem[EL_TANGENT][faceref[i].tang_idx[j]].v;
 			}
 
 			if(velem[EL_TEXCOORD].empty()) {
@@ -207,6 +217,12 @@ static void read_face(FaceRef *face, struct xml_node *node)
 			face->norm_idx[i] = attr->ival;
 		} else {
 			face->norm_idx[i] = 0;
+		}
+
+		if((attr = xml_get_attr(node, "tangent")) && attr->type == ATYPE_INT) {
+			face->tang_idx[i] = attr->ival;
+		} else {
+			face->tang_idx[i] = 0;
 		}
 
 		if((attr = xml_get_attr(node, "texcoord")) && attr->type == ATYPE_INT) {

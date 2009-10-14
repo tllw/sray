@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct SurfPoint;
 class Material;
+class MatAttrib;
 
 typedef Color (*ShaderFunc)(const Ray&, const SurfPoint&, const Material*);
 
@@ -33,5 +34,7 @@ Color shade_undef(const Ray &ray, const SurfPoint &sp, const Material *mat);
 Color shade_phong(const Ray &ray, const SurfPoint &sp, const Material *mat);
 
 double fresnel(double r, double cosa);
+
+Vector3 get_bump_normal(const Ray &ray, const SurfPoint &sp, const MatAttrib &attr);
 
 #endif	// SHADER_H_
