@@ -33,6 +33,8 @@ struct block {
 
 	int pri;	/* block priority */
 
+	long t0, t1;	/* frame time (interval) */
+
 	struct block *next, *tail;
 	int len;
 };
@@ -45,6 +47,8 @@ void init_block(struct block *blk, int bx, int by, int bsz);
 struct block *get_block(int bx, int by, int bsz);
 void free_block(struct block *blk);
 void delete_bpool(void);
+
+int blkcmp(const void *a, const void *b);
 
 #ifdef __cplusplus
 }

@@ -1,48 +1,86 @@
-/*
-This file is part of the s-ray renderer <http://code.google.com/p/sray>.
-Copyright (C) 2009 John Tsiombikas <nuclear@member.fsf.org>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 #ifndef TPOOL_H_
 #define TPOOL_H_
 
-#include "block.h"
+#include <queue>
+#include <pthread.h>
 
-enum {
-	BLK_FIFO,
-	BLK_PRI_GAUSSIAN
+// returns the number of processors (cores) in the system
+extern "C" int get_number_processors();
+
+void *worker_thread_func(void *arg);
+
+
+struct Task {
+	void *closure;
+	void (*proc)(void *cls);
+	void (*done)(void *cls);
+
+	Task();
+	Task(void (*proc)(void*), void (*done)(void*), void *cls);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct ThreadStats {
+	unsigned long start_time;
+	unsigned long proc_time, idle_time;
+	unsigned long idle_start, proc_start;
 
-int init_threads(int threads);
-void start_frame(int blk_sz, int calc_prior);
-void stop_frame(void);
-void *worker(void *cls);
+	unsigned long tasks;
+};
 
-void wait_frame(void);
-int is_frame_done(void);
-int get_work_status(int *bdone, int *bmax);
+class ThreadPool {
+private:
+	std::queue<Task> workq;
+	int num_tasks;
 
-void set_block_render_func(void (*func)(struct block*));
-void set_block_done_func(void (*func)(struct block*));
+	pthread_t *threads;
+	ThreadStats *stats;
+	int num_threads;
 
-#ifdef __cplusplus
+	pthread_cond_t work_pending_cond;
+	pthread_mutex_t work_pending_mutex;
+
+	volatile int work_left;
+	pthread_cond_t done_cond;
+	//pthread_mutex_t done_mutex;
+
+	void finish_task(const Task &task);
+
+	bool stopping;
+
+public:
+	ThreadPool();
+	~ThreadPool();
+
+	bool start(int num_threads = 0);
+	void stop();
+
+	inline int get_num_threads() const;
+	inline const ThreadStats *get_thread_stats(int tid) const;
+
+	bool add_work(const Task *tasks, int count);
+	void clear_work();
+
+	void wait_work();
+	inline bool is_done() const;
+
+	friend void *worker_thread_func(void *arg);
+};
+
+
+// --- threadpool inline functions ---
+inline int ThreadPool::get_num_threads() const
+{
+	return num_threads;
 }
-#endif
 
-#endif	/* TPOOL_H_ */
+inline const ThreadStats *ThreadPool::get_thread_stats(int tid) const
+{
+	return stats + tid;
+}
+
+inline bool ThreadPool::is_done() const
+{
+	return work_left == 0;
+}
+
+#endif	// TPOOL_H_
