@@ -28,7 +28,7 @@ static Camera *load_camera(struct xml_node *node);
 
 static Scene *cur_scene;
 
-double Scene::epsilon = SMALL_NUMBER;//ERROR_MARGIN;
+double Scene::epsilon = ERROR_MARGIN;
 
 void set_scene(Scene *scn)
 {
@@ -171,10 +171,12 @@ bool Scene::load(FILE *fp)
 		node = node->next;
 	}
 
-	printf("loaded\n");
-	printf("%d objects\n", (int)objects.size());
-	printf("%d lights\n", (int)lights.size());
-	printf("%d materials\n", (int)mat.size());
+	if(VERBOSE) {
+		printf("loaded\n");
+		printf("%d objects\n", (int)objects.size());
+		printf("%d lights\n", (int)lights.size());
+		printf("%d materials\n", (int)mat.size());
+	}
 
 	xml_free_tree(xml);
 	return true;
@@ -371,7 +373,7 @@ bool Scene::build_photon_maps(int t0, int t1)
 
 		// also, since we're at it, build the projection maps
 		if(!objects.empty()) {
-			if(opt.verb) {
+			if(XVERBOSE) {
 				printf("building projection maps for light %d\n", i);
 			}
 			lights[i]->build_projmap((const Object**)get_objects(), (int)objects.size(), t0, t1);
@@ -388,7 +390,7 @@ bool Scene::build_photon_maps(int t0, int t1)
 
 	delete [] ltpow;
 
-	if(opt.verb) {
+	if(VERBOSE) {
 		printf("caustics photons stored: %d (out of %d shot)\n", cphot, opt.caust_photons);
 		printf("gi photons stored: %d (out of %d shot)\n", gphot, opt.gi_photons);
 	}
@@ -406,7 +408,7 @@ int Scene::build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow
 		// calculate the number of photons to cast from this source
 		int nphot = ceil((double)num_photons * ltpow[i].photon_power);
 
-		if(opt.verb) {
+		if(!QUIET) {
 			printf("light %d caustics photons (%d): ", (int)i, nphot);
 			fflush(stdout);
 		}
@@ -426,14 +428,14 @@ int Scene::build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow
 				caust_map.add_photon(p.pos, p.dir, p.norm, p.col);
 				stored++;
 
-				if(opt.verb && (stored & 0xff) == 0) {
+				if(!QUIET && (stored & 0xff) == 0) {
 					putchar('.');
 					fflush(stdout);
 				}
 			}
 		}
 
-		if(opt.verb) putchar('\n');
+		if(!QUIET) putchar('\n');
 
 		if(nphot) caust_map.scale_photon_power(1.0 / (double)nphot);
 	}
@@ -451,7 +453,7 @@ int Scene::build_global_map(int t0, int t1, int num_photons, LightPower *ltpow)
 		// calculate the number of photons to cast from this source
 		int nphot = ceil((double)num_photons * ltpow[i].photon_power);
 
-		if(opt.verb) {
+		if(!QUIET) {
 			printf("light %d gi photons (%d): ", (int)i, nphot);
 			fflush(stdout);
 		}
@@ -472,14 +474,14 @@ int Scene::build_global_map(int t0, int t1, int num_photons, LightPower *ltpow)
 				gi_map.add_photon(p.pos, p.dir, p.norm, p.col);
 				stored++;
 
-				if(opt.verb && (stored & 0xff) == 0) {
+				if(!QUIET && (stored & 0xff) == 0) {
 					putchar('.');
 					fflush(stdout);
 				}
 			}
 		}
 
-		if(opt.verb) putchar('\n');
+		if(!QUIET) putchar('\n');
 
 		if(nphot) gi_map.scale_photon_power(1.0 / (double)nphot);
 	}

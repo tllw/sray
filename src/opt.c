@@ -19,24 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
 #include "opt.h"
-
-#if defined(__APPLE__) && defined(__MACH__)
-
-# ifndef __unix__
-#  define __unix__	1
-# endif	/* unix */
-
-# ifndef __bsd__
-#  define __bsd__	1
-# endif	/* bsd */
-
-#endif	/* apple */
-
-#ifdef __bsd__
-#include <sys/sysctl.h>
-#endif
 
 struct options opt;
 
@@ -97,8 +80,8 @@ static struct {
 	{OPT_SOCT_MAX_ITEMS, 0, "soctitems",	"scene octree: max items per node"},
 	{OPT_MOCT_MAX_DEPTH, 0, "moctdepth",	"mesh octree: max tree depth"},
 	{OPT_MOCT_MAX_ITEMS, 0, "moctitems",	"mesh octree: max items per node"},
-	{OPT_QUIET,			'q', "quiet",		"don't output too much info (stderr)"},
-	{OPT_VERBOSE,		'v', "verbose",		"output a whole lot of info (stderr)"},
+	{OPT_QUIET,			'q', "quiet",		"run quietly (no output)"},
+	{OPT_VERBOSE,		'v', "verbose",		"produce verbose output (add more for greater effect)"},
 	{OPT_NOX,			'x', "nogui",		"don't use X11, non-interactive mode"},
 	{OPT_HELP,			'h', "help",		"print usage information and exit"},
 	{0, 0, 0, 0}
@@ -107,7 +90,9 @@ static struct {
 static void default_opt(void);
 static void print_opt(void);
 static int get_opt(const char *arg);
-static int count_processors(void);
+
+/* defined in tpool.cc */
+int get_number_processors(void);
 
 int parse_opt(int argc, char **argv)
 {
@@ -299,11 +284,11 @@ int parse_opt(int argc, char **argv)
 			break;
 
 		case OPT_QUIET:
-			opt.verb = 0;
+			opt.verb--;
 			break;
 
 		case OPT_VERBOSE:
-			opt.verb = 2;
+			opt.verb++;
 			break;
 
 		case OPT_NOX:
@@ -311,7 +296,7 @@ int parse_opt(int argc, char **argv)
 			break;
 
 		case OPT_HELP:
-			printf("rend options:\n");
+			printf("%s options:\n", argv[0]);
 			for(j=0; options[j].opt; j++) {
 				fputs("  ", stdout);
 				if(options[j].sopt) {
@@ -347,7 +332,7 @@ int parse_opt(int argc, char **argv)
 	}
 
 	if(!opt.threads) {
-		if((opt.threads = count_processors()) <= 0) {
+		if((opt.threads = get_number_processors()) <= 0) {
 			opt.threads = 1;
 		}
 	}
@@ -385,7 +370,7 @@ static void default_opt(void)
 	opt.caust_photons = opt.gi_photons = 0;
 	opt.gather_dist = 0.001;
 	opt.photon_energy = 300.0;
-	opt.verb = 1;
+	opt.verb = 0;
 	opt.interactive = 1;
 	opt.fps = 30;
 	opt.time_start = opt.time_end = 0;
@@ -451,28 +436,4 @@ static int get_opt(const char *arg)
 		}
 	}
 	return OPT_UNKNOWN;
-}
-
-static int count_processors(void)
-{
-
-#if defined(unix) || defined(__unix__)
-# if defined(__bsd__)
-	int num, mib[] = {CTL_HW, HW_NCPU};
-	size_t len = sizeof num;
-
-	sysctl(mib, 2, &num, &len, 0, 0);
-	return num;
-
-# elif defined(__sgi)
-	return sysconf(_SC_NPROC_ONLN);
-# else
-	return sysconf(_SC_NPROCESSORS_ONLN);
-# endif	/* bsd/sgi/other */
-
-#elif defined(WIN32) || defined(__WIN32__)
-	SYSTEM_INFO info;
-	GetSystemInfo(&info);
-	return info.dwNumberOfProcessors;
-#endif
 }

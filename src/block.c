@@ -78,3 +78,10 @@ void delete_bpool(void)
 	}
 	pthread_mutex_unlock(&bpool_mut);
 }
+
+int blkcmp(const void *a, const void *b)
+{
+	int pria = ((struct block*)a)->pri;
+	int prib = ((struct block*)b)->pri;
+	return prib - pria;
+}

@@ -20,6 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define RAY_MAGNITUDE	10000.0
 
+/* verbosity levels */
+#define QUIET			(opt.verb < 0)
+#define VERBOSE			(opt.verb > 0)
+#define XVERBOSE		(opt.verb > 1)
+#define VERBAL_DIARRHEA	(opt.verb > 2)
+
 extern struct options {
 	char *scenefile;
 	int width, height;
