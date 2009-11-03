@@ -133,7 +133,7 @@ bool Mesh::load_xml(struct xml_node *node)
 				v.norm = velem[EL_NORMAL][faceref[i].norm_idx[j]].v;
 			}
 
-			if(velem[EL_NORMAL].empty()) {
+			if(velem[EL_TANGENT].empty()) {
 				v.tang = Vector3(0, 0, 0);
 			} else {
 				v.tang = velem[EL_TANGENT][faceref[i].tang_idx[j]].v;
