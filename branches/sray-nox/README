@@ -1,0 +1,28 @@
+S-ray 0.1
+---------
+Copyright 2009 (C) John Tsiombikas <nuclear@member.fsf.org>
+
+This program is free software, you may run, copy, modify and redistribute this
+program freely, under the terms of the GNU General Public License version 3, or
+at your option, any later version published by the free software foundation (see
+COPYING for details).
+
+Requirements / dependencies:
+- GNU make
+- Xlib
+- POSIX threads
+- expat (http://expat.sourceforge.net)
+- libvmath (http://gfxtools.sourceforge.net)
+- libimago (http://gfxtools.sourceforge.net)
+- kdtree (http://code.google.com/p/kdtree)
+- pkg-config (http://pkg-config.freedesktop.org)
+
+Notes:
+- Run gmake instead of make to invoke GNU make on non-GNU systems.
+- Libraries installed from source are usually unstalled in /usr/local. If the
+  dynamic loader doesn't look into /usr/local/lib, make sure LD_LIBRARY_PATH is
+  set accordingly. For similar reasons you may need to set PKG_CONFIG_PATH to
+  /usr/local/lib/pkgconfig so that pkg-config is able to find vmath.pc and
+  imago.pc.
+- XShm (X shared memory extension) is required, but will fall back to XPutImage
+  when connecting to remote X servers.
