@@ -81,18 +81,18 @@ bool AABox::contains(const Vector3 &pt) const
 bool AABox::intersect(const Ray &ray, SurfPoint *pt) const
 {
 	Vector3 bbox[2] = {min, max};
-	static const float t0 = 0.0;
-	static const float t1 = 1.0;
+	static const double t0 = 0.0;
+	static const double t1 = 1.0;
 
 	int xsign = (int)(ray.dir.x < 0.0);
-	float invdirx = 1.0 / ray.dir.x;
-	float tmin = (bbox[xsign].x - ray.origin.x) * invdirx;
-	float tmax = (bbox[1 - xsign].x - ray.origin.x) * invdirx;
+	double invdirx = 1.0 / ray.dir.x;
+	double tmin = (bbox[xsign].x - ray.origin.x) * invdirx;
+	double tmax = (bbox[1 - xsign].x - ray.origin.x) * invdirx;
 
 	int ysign = (int)(ray.dir.y < 0.0);
-	float invdiry = 1.0 / ray.dir.y;
-	float tymin = (bbox[ysign][1] - ray.origin.y) * invdiry;
-	float tymax = (bbox[1 - ysign][1] - ray.origin.y) * invdiry;
+	double invdiry = 1.0 / ray.dir.y;
+	double tymin = (bbox[ysign][1] - ray.origin.y) * invdiry;
+	double tymax = (bbox[1 - ysign][1] - ray.origin.y) * invdiry;
 
 	if((tmin > tymax) || (tymin > tmax)) {
 		return false;
@@ -102,9 +102,9 @@ bool AABox::intersect(const Ray &ray, SurfPoint *pt) const
 	if(tymax < tmax) tmax = tymax;
 
 	int zsign = (int)(ray.dir.z < 0.0);
-	float invdirz = 1.0 / ray.dir.z;
-	float tzmin = (bbox[zsign][2] - ray.origin.z) * invdirz;
-	float tzmax = (bbox[1 - zsign][2] - ray.origin.z) * invdirz;
+	double invdirz = 1.0 / ray.dir.z;
+	double tzmin = (bbox[zsign][2] - ray.origin.z) * invdirz;
+	double tzmax = (bbox[1 - zsign][2] - ray.origin.z) * invdirz;
 
 	if((tmin > tzmax) || (tzmin > tmax)) {
 		return false;

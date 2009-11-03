@@ -28,7 +28,7 @@ static Camera *load_camera(struct xml_node *node);
 
 static Scene *cur_scene;
 
-double Scene::epsilon = SMALL_NUMBER;//ERROR_MARGIN;
+double Scene::epsilon = ERROR_MARGIN;
 
 void set_scene(Scene *scn)
 {
