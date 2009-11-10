@@ -17,6 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <assert.h>
 #include "img.h"
 #include "scene.h"
 #include "render.h"
@@ -25,10 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "timer.h"
 #include "block.h"
 #include "datapath.h"
+#include "fb.h"
 
 static bool init();
 static void cleanup();
 static void output(int fnum);
+static void sighandler(int s);
 
 static Scene *scn;
 static Image fb;
@@ -70,15 +75,24 @@ int main(int argc, char **argv)
 		printf("rendering time: %lu min, %lu sec, %lu msec\n", min, sec, msec);
 	}
 
-	// drop dead
-	cleanup();
+	// cleanup is called courtesy of atexit
 	return 0;
 }
 
 static bool init()
 {
+	atexit(cleanup);
+	signal(SIGINT, sighandler);
+	signal(SIGSEGV, sighandler);
+	signal(SIGILL, sighandler);
+	signal(SIGTERM, sighandler);
+	signal(SIGBUS, sighandler);
+
 	// create the framebuffer
-	fb.create(opt.width, opt.height);
+	if(!(fb.pixels = (float*)alloc_framebuf(opt.width, opt.height))) {
+		fprintf(stderr, "failed to allocate the framebuffer\n");
+		return false;
+	}
 
 	// load scene
 	scn = new Scene;
@@ -123,6 +137,7 @@ static void cleanup()
 {
 	delete_bpool();
 	delete scn;
+	free_framebuf(fb.pixels);
 }
 
 static void output(int fnum)
@@ -140,4 +155,10 @@ static void output(int fnum)
 	if(!fb.save(fname)) {
 		fprintf(stderr, "failed to write file: %s\n", fname);
 	}
+}
+
+static void sighandler(int s)
+{
+	fprintf(stderr, "signal caught: %s, exiting\n", strsignal(s));
+	exit(1);
 }

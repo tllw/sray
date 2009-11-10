@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Image::Image()
 {
 	pixels = 0;
+	manage_pixels = false;
 }
 
 Image::~Image()
@@ -29,18 +30,23 @@ Image::~Image()
 	destroy();
 }
 
-bool Image::create(int xsz, int ysz)
+bool Image::create(int xsz, int ysz, float *newpix)
 {
-	Color *newpix;
-	
-	try {
-		newpix = new Color[xsz * ysz];
-	}
-	catch(std::bad_alloc e) {
-		return false;
+	bool should_delete = manage_pixels && pixels;
+
+	if(!newpix) {
+		try {
+			newpix = new float[4 * xsz * ysz];
+		}
+		catch(std::bad_alloc e) {
+			return false;
+		}
+		manage_pixels = true;
 	}
 
-	delete [] this->pixels;
+	if(should_delete) {
+		delete [] pixels;
+	}
 	this->pixels = newpix;
 	this->xsz = xsz;
 	this->ysz = ysz;
@@ -50,7 +56,9 @@ bool Image::create(int xsz, int ysz)
 
 void Image::destroy()
 {
-	delete [] pixels;
+	if(manage_pixels) {
+		delete [] pixels;
+	}
 }
 
 bool Image::load(const char *fname)
@@ -63,14 +71,8 @@ bool Image::load(const char *fname)
 		return false;
 	}
 
-	Color *newpix = new Color[xsz * ysz];
-
-	for(int i=0; i<xsz * ysz; i++) {
-		newpix[i].x = imgbuf[i * 4];
-		newpix[i].y = imgbuf[i * 4 + 1];
-		newpix[i].z = imgbuf[i * 4 + 2];
-		newpix[i].w = imgbuf[i * 4 + 3];
-	}
+	float *newpix = new float[4 * xsz * ysz];
+	memcpy(newpix, imgbuf, 4 * xsz * ysz * sizeof *newpix);
 	free_image(imgbuf);
 
 	delete [] pixels;
@@ -83,34 +85,20 @@ bool Image::save(const char *fname, bool alpha) const
 	set_image_option(IMG_OPT_ALPHA, alpha ? 1 : 0);
 	set_image_option(IMG_OPT_FLOAT, 1);
 
-	float *imgbuf = new float[xsz * ysz * 4];
-	for(int i=0; i<xsz * ysz; i++) {
-		imgbuf[i * 4] = pixels[i].x;
-		imgbuf[i * 4 + 1] = pixels[i].y;
-		imgbuf[i * 4 + 2] = pixels[i].z;
-		imgbuf[i * 4 + 3] = pixels[i].w;
-	}
-
-	if(save_image(fname, imgbuf, xsz, ysz, IMG_FMT_AUTO) == -1) {
-		delete [] imgbuf;
-		return false;
-	}
-
-	delete [] imgbuf;
-	return true;
+	return save_image(fname, pixels, xsz, ysz, IMG_FMT_AUTO) != -1;
 }
 
-bool Image::set_pixels(int xsz, int ysz, const Color *pixels)
+bool Image::set_pixels(int xsz, int ysz, const float *pixels)
 {
 	if(!create(xsz, ysz)) {
 		return false;
 	}
 	
-	memcpy(this->pixels, pixels, xsz * ysz * sizeof *pixels);
+	memcpy(this->pixels, pixels, xsz * ysz * 4 * sizeof *pixels);
 	return true;
 }
 
-Color *Image::get_pixels() const
+float *Image::get_pixels() const
 {
 	return pixels;
 }
