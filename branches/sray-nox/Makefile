@@ -13,7 +13,7 @@ CC = gcc
 CXX = g++
 CFLAGS = -pedantic $(warn) $(dbg) $(opt) $(prof) $(def) `pkg-config --cflags vmath imago`
 CXXFLAGS = -pedantic $(warn) -Wno-deprecated $(dbg) $(opt) $(prof) $(def) `pkg-config --cflags vmath imago`
-LDFLAGS = $(prof) `pkg-config --libs vmath imago` -lm -lpthread -lexpat -lkdtree
+LDFLAGS = $(prof) `pkg-config --libs vmath imago` -lm -lpthread -lexpat -lkdtree -lrt
 
 # XXX work-arround for a bug in my cache manager implementation which
 # won't compile properly with thread-specific data on MacOSX at the moment.
@@ -34,7 +34,7 @@ $(bin): $(obj)
 
 .PHONY: clean
 clean:
-	rm -f $(obj) $(bin) $(depfiles)
+	rm -f $(obj) $(bin)
 
 .PHONY: cleandep
 cleandep:

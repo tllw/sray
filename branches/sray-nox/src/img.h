@@ -23,20 +23,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /** Floating point color image. Used for the framebuffer and texture maps. */
 class Image {
 public:
-	Color *pixels;
+	float *pixels;
 	int xsz, ysz;
+	bool manage_pixels;
 
 	Image();
 	~Image();
 
-	bool create(int xsz, int ysz);
+	bool create(int xsz, int ysz, float *newpix = 0);
 	void destroy();
 
 	bool load(const char *fname);
 	bool save(const char *fname, bool alpha = true) const;
 
-	bool set_pixels(int xsz, int ysz, const Color *pixels);
-	Color *get_pixels() const;
+	bool set_pixels(int xsz, int ysz, const float *pixels);
+	float *get_pixels() const;
 
 	int get_width() const;
 	int get_height() const;

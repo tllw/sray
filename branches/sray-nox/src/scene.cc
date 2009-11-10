@@ -189,14 +189,62 @@ void Scene::add_object(Object *obj)
 	valid_octree = false;
 }
 
+Object *Scene::get_object(int idx)
+{
+	if(idx < 0 || idx >= (int)objects.size()) {
+		return 0;
+	}
+	return objects[idx];
+}
+
+const Object *Scene::get_object(int idx) const
+{
+	if(idx < 0 || idx >= (int)objects.size()) {
+		return 0;
+	}
+	return objects[idx];
+}
+
 void Scene::add_light(Light *lt)
 {
 	lights.push_back(lt);
 }
 
+Light *Scene::get_light(int idx)
+{
+	if(idx < 0 || idx >= (int)lights.size()) {
+		return 0;
+	}
+	return lights[idx];
+}
+
+const Light *Scene::get_light(int idx) const
+{
+	if(idx < 0 || idx >= (int)lights.size()) {
+		return 0;
+	}
+	return lights[idx];
+}
+
 void Scene::add_material(Material *mat)
 {
 	this->mat.push_back(mat);
+}
+
+Material *Scene::get_material(int idx)
+{
+	if(idx < 0 || idx >= (int)mat.size()) {
+		return 0;
+	}
+	return mat[idx];
+}
+
+const Material *Scene::get_material(int idx) const
+{
+	if(idx < 0 || idx >= (int)mat.size()) {
+		return 0;
+	}
+	return mat[idx];
 }
 
 Material *Scene::get_material(const char *name)
@@ -341,11 +389,7 @@ bool Scene::build_tree(int t0, int t1)
 	return true;
 }
 
-struct LightPower {
-	double intensity;
-	double photon_power;
-};
-
+#if 0
 bool Scene::build_photon_maps(int t0, int t1)
 {
 	if(lights.empty() || (!opt.caust_photons && !opt.gi_photons)) {
@@ -396,7 +440,7 @@ bool Scene::build_photon_maps(int t0, int t1)
 	}
 	return true;
 }
-
+#endif
 
 int Scene::build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow)
 {
@@ -510,12 +554,16 @@ Color Scene::trace_ray(const Ray &ray) const
 	Object *obj;
 
 	if((obj = cast_ray(ray, &sp))) {
+		Color color;
 		Material *mat = obj->get_material();
+
 		if(mat) {
-			return obj->get_material()->shade(ray, sp);
+			color = obj->get_material()->shade(ray, sp);
 		} else {
-			return default_mat.shade(ray, sp);
+			color = default_mat.shade(ray, sp);
 		}
+		color.w = 1.0;
+		return color;
 	}
 	return env_color;
 }

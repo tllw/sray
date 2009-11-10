@@ -52,13 +52,6 @@ private:
 	PhotonMap caust_map, gi_map;
 	double gather_dist;
 
-	struct LightPower {
-		double intensity, photon_power;
-	};
-
-	int build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow);
-	int build_global_map(int t0, int t1, int num_photons, LightPower *ltpow);
-
 	bool trace_caustics_photon(const Ray &ray, Photon *phot) const;
 	bool trace_global_photon(const Ray &ray, Photon *phot) const;
 
@@ -73,9 +66,17 @@ public:
 	bool load(FILE *fp);
 
 	void add_object(Object *obj);
+	Object *get_object(int idx);
+	const Object *get_object(int idx) const;
+
 	void add_light(Light *lt);
+	Light *get_light(int idx);
+	const Light *get_light(int idx) const;
 
 	void add_material(Material *mat);
+	Material *get_material(int idx);
+	const Material *get_material(int idx) const;
+
 	Material *get_material(const char *name);
 
 	void set_camera(Camera *cam);
@@ -114,7 +115,10 @@ public:
 	 */
 	bool build_tree(int t0 = 0, int t1 = INT_MIN);
 
-	bool build_photon_maps(int t0 = 0, int t1 = INT_MIN);
+	//bool build_photon_maps(int t0 = 0, int t1 = INT_MIN);
+	
+	int build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow);
+	int build_global_map(int t0, int t1, int num_photons, LightPower *ltpow);
 
 	Octree<Object*> *get_octree();
 	PhotonMap *get_caust_map();

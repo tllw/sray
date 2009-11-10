@@ -50,6 +50,7 @@ static void build_accel(long t0, long t1)
 	scn->build_tree(t0, t1);
 }
 
+
 static void shoot_photons(long t0, long t1)
 {
 	if(!opt.caust_photons && !opt.gi_photons) {
@@ -60,7 +61,51 @@ static void shoot_photons(long t0, long t1)
 		printf("shooting photons\n");
 	}
 
-	scn->build_photon_maps(t0, t1);
+	int num_lights = scn->get_light_count();
+	if(!num_lights || (!opt.caust_photons && !opt.gi_photons)) {
+		return;
+	}
+	if(t1 == INT_MIN) {
+		t1 = t0;
+	}
+
+	/* assign number of photons to each light source by dividing the total
+	 * number of photons between the light sources, weighted by their intensity.
+	 */
+	double acc_power = 0.0;
+	LightPower *ltpow = new LightPower[num_lights];
+
+	Light **lights = (Light**)scn->get_lights();
+
+	// accumulate light intensity over all lights
+	for(int i=0; i<num_lights; i++) {
+		Color col = lights[i]->get_color();
+
+		ltpow[i].intensity = (col.x + col.y + col.z) / 3.0;
+		acc_power += ltpow[i].intensity;
+
+		// also build the projection maps
+		int num_obj = scn->get_object_count();
+		if(num_obj) {
+			lights[i]->build_projmap((const Object**)scn->get_objects(), num_obj, t0, t1);
+		}
+	}
+
+	// calculate the fraction of the total power corresponding to each light
+	for(int i=0; i<num_lights; i++) {
+		ltpow[i].photon_power = ltpow[i].intensity / acc_power;
+	}
+
+	int cphot = scn->build_caustics_map(t0, t1, opt.caust_photons, ltpow);
+	int gphot = scn->build_global_map(t0, t1, opt.gi_photons, ltpow);
+
+	delete [] ltpow;
+
+	if(VERBOSE) {
+		printf("caustics photons stored: %d (out of %d shot)\n", cphot, opt.caust_photons);
+		printf("gi photons stored: %d (out of %d shot)\n", gphot, opt.gi_photons);
+	}
+	//scn->build_photon_maps(t0, t1);
 }
 
 static void render_frame(long t0, long t1)
@@ -139,23 +184,28 @@ static void render_block(void *cls)
 
 	int xsz = framebuffer->get_width();
 	int start_offs = blk->y * xsz + blk->x;
-	Color *img = framebuffer->get_pixels() + start_offs;
+	float *img = framebuffer->get_pixels() + start_offs * 4;
 
 	for(int y=0; y<blk->ysz; y++) {
 		for(int x=0; x<blk->xsz; x++) {
 			int i = 0;
 
-			img[x].x = img[x].y = img[x].z = img[x].w = 0.0;
+			img[x * 4] = img[x * 4 + 1] = img[x * 4 + 2] = img[x * 4 + 3] = 0.0f;
 
 			while(i < opt.max_samples) {
 				Ray ray = cam->get_primary_ray(x + blk->x, y + blk->y, i, ftime);
 				ray.iter = opt.iter;
 				subpix[i] = scn->trace_ray(ray);
-				img[x] += subpix[i];
+
+				Color pixel;
+				pixel.x = img[x * 4] += subpix[i].x;
+				pixel.y = img[x * 4 + 1] += subpix[i].y;
+				pixel.z = img[x * 4 + 2] += subpix[i].z;
+				pixel.w = img[x * 4 + 3] += subpix[i].w;
 				i++;
 
 				if(i >= opt.min_samples && i > 1) {
-					float v = variance(subpix, img[x], i, rcp_lut[i]);
+					float v = variance(subpix, pixel, i, rcp_lut[i]);
 					if(v < opt.max_var) {
 						break;
 					}
