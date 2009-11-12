@@ -295,7 +295,6 @@ Vector3 get_bump_normal(const Ray &ray, const SurfPoint &sp, const MatAttrib &at
 	Vector3 normal = sp.normal;
 	
 	if(attr.tex) {
-		//Color norm_col = mat->get_color("normal", sp.texcoord, ray.time);
 		Color norm_col = attr.tex->lookup(sp.texcoord, ray.time);
 		Vector3 n = norm_col * 2.0 - 1.0;
 
