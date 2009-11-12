@@ -20,6 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define RAY_MAGNITUDE	10000.0
 
+/* verbosity levels */
+#define QUIET			(opt.verb < 0)
+#define VERBOSE			(opt.verb > 0)
+#define XVERBOSE		(opt.verb > 1)
+#define VERBAL_DIARRHEA	(opt.verb > 2)
+
+/* this is a special mode which makes sray output only the status
+ * information needed to drive a frontend program.
+ */
+#define BACKEND			(opt.verb < -50)
+
 extern struct options {
 	char *scenefile;
 	int width, height;
@@ -44,7 +55,6 @@ extern struct options {
 	int meshoct_max_depth, meshoct_max_items;
 
 	int num_frames;
-	int interactive;	/* connect to X server? */
 } opt;
 
 #ifdef __cplusplus

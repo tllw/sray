@@ -33,7 +33,7 @@ Octree<T>::Octree()
 	root = 0;
 	items_per_node = 5;
 	max_depth = 5;
-	show_build_stats = opt.verb;
+	show_build_stats = VERBOSE;
 
 	clear();
 }

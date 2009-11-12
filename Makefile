@@ -1,3 +1,5 @@
+PREFIX = /usr/local
+
 csrc = $(wildcard src/*.c)
 ccsrc = $(wildcard src/*.cc)
 obj = $(ccsrc:.cc=.o) $(csrc:.c=.o)
@@ -13,14 +15,7 @@ CC = gcc
 CXX = g++
 CFLAGS = -pedantic $(warn) $(dbg) $(opt) $(prof) $(def) `pkg-config --cflags vmath imago`
 CXXFLAGS = -pedantic $(warn) -Wno-deprecated $(dbg) $(opt) $(prof) $(def) `pkg-config --cflags vmath imago`
-LDFLAGS = $(prof) `pkg-config --libs vmath imago` $(wsys_libs) -lm -lpthread -lexpat -lkdtree
-
-ifeq ($(shell uname -s),MINGW32)
-	#fill this up
-	wsys_libs = 
-else
-	wsys_libs = -lX11 -lXext
-endif
+LDFLAGS = $(prof) `pkg-config --libs vmath imago` -lm -lpthread -lexpat -lkdtree -lrt
 
 # XXX work-arround for a bug in my cache manager implementation which
 # won't compile properly with thread-specific data on MacOSX at the moment.
@@ -41,8 +36,16 @@ $(bin): $(obj)
 
 .PHONY: clean
 clean:
-	rm -f $(obj) $(bin) $(depfiles)
+	rm -f $(obj) $(bin)
 
 .PHONY: cleandep
 cleandep:
 	rm -f $(depfiles)
+
+.PHONY: install
+install:
+	install -m 775 $(bin) $(PREFIX)/bin/$(bin)
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(PREFIX)/bin/$(bin)

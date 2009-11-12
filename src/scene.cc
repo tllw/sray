@@ -171,10 +171,12 @@ bool Scene::load(FILE *fp)
 		node = node->next;
 	}
 
-	printf("loaded\n");
-	printf("%d objects\n", (int)objects.size());
-	printf("%d lights\n", (int)lights.size());
-	printf("%d materials\n", (int)mat.size());
+	if(VERBOSE) {
+		printf("loaded\n");
+		printf("%d objects\n", (int)objects.size());
+		printf("%d lights\n", (int)lights.size());
+		printf("%d materials\n", (int)mat.size());
+	}
 
 	xml_free_tree(xml);
 	return true;
@@ -187,14 +189,62 @@ void Scene::add_object(Object *obj)
 	valid_octree = false;
 }
 
+Object *Scene::get_object(int idx)
+{
+	if(idx < 0 || idx >= (int)objects.size()) {
+		return 0;
+	}
+	return objects[idx];
+}
+
+const Object *Scene::get_object(int idx) const
+{
+	if(idx < 0 || idx >= (int)objects.size()) {
+		return 0;
+	}
+	return objects[idx];
+}
+
 void Scene::add_light(Light *lt)
 {
 	lights.push_back(lt);
 }
 
+Light *Scene::get_light(int idx)
+{
+	if(idx < 0 || idx >= (int)lights.size()) {
+		return 0;
+	}
+	return lights[idx];
+}
+
+const Light *Scene::get_light(int idx) const
+{
+	if(idx < 0 || idx >= (int)lights.size()) {
+		return 0;
+	}
+	return lights[idx];
+}
+
 void Scene::add_material(Material *mat)
 {
 	this->mat.push_back(mat);
+}
+
+Material *Scene::get_material(int idx)
+{
+	if(idx < 0 || idx >= (int)mat.size()) {
+		return 0;
+	}
+	return mat[idx];
+}
+
+const Material *Scene::get_material(int idx) const
+{
+	if(idx < 0 || idx >= (int)mat.size()) {
+		return 0;
+	}
+	return mat[idx];
 }
 
 Material *Scene::get_material(const char *name)
@@ -339,11 +389,7 @@ bool Scene::build_tree(int t0, int t1)
 	return true;
 }
 
-struct LightPower {
-	double intensity;
-	double photon_power;
-};
-
+#if 0
 bool Scene::build_photon_maps(int t0, int t1)
 {
 	if(lights.empty() || (!opt.caust_photons && !opt.gi_photons)) {
@@ -371,7 +417,7 @@ bool Scene::build_photon_maps(int t0, int t1)
 
 		// also, since we're at it, build the projection maps
 		if(!objects.empty()) {
-			if(opt.verb) {
+			if(XVERBOSE) {
 				printf("building projection maps for light %d\n", i);
 			}
 			lights[i]->build_projmap((const Object**)get_objects(), (int)objects.size(), t0, t1);
@@ -388,13 +434,13 @@ bool Scene::build_photon_maps(int t0, int t1)
 
 	delete [] ltpow;
 
-	if(opt.verb) {
+	if(VERBOSE) {
 		printf("caustics photons stored: %d (out of %d shot)\n", cphot, opt.caust_photons);
 		printf("gi photons stored: %d (out of %d shot)\n", gphot, opt.gi_photons);
 	}
 	return true;
 }
-
+#endif
 
 int Scene::build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow)
 {
@@ -406,7 +452,7 @@ int Scene::build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow
 		// calculate the number of photons to cast from this source
 		int nphot = ceil((double)num_photons * ltpow[i].photon_power);
 
-		if(opt.verb) {
+		if(!QUIET) {
 			printf("light %d caustics photons (%d): ", (int)i, nphot);
 			fflush(stdout);
 		}
@@ -426,14 +472,14 @@ int Scene::build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow
 				caust_map.add_photon(p.pos, p.dir, p.norm, p.col);
 				stored++;
 
-				if(opt.verb && (stored & 0xff) == 0) {
+				if(!QUIET && (stored & 0xff) == 0) {
 					putchar('.');
 					fflush(stdout);
 				}
 			}
 		}
 
-		if(opt.verb) putchar('\n');
+		if(!QUIET) putchar('\n');
 
 		if(nphot) caust_map.scale_photon_power(1.0 / (double)nphot);
 	}
@@ -451,7 +497,7 @@ int Scene::build_global_map(int t0, int t1, int num_photons, LightPower *ltpow)
 		// calculate the number of photons to cast from this source
 		int nphot = ceil((double)num_photons * ltpow[i].photon_power);
 
-		if(opt.verb) {
+		if(!QUIET) {
 			printf("light %d gi photons (%d): ", (int)i, nphot);
 			fflush(stdout);
 		}
@@ -472,14 +518,14 @@ int Scene::build_global_map(int t0, int t1, int num_photons, LightPower *ltpow)
 				gi_map.add_photon(p.pos, p.dir, p.norm, p.col);
 				stored++;
 
-				if(opt.verb && (stored & 0xff) == 0) {
+				if(!QUIET && (stored & 0xff) == 0) {
 					putchar('.');
 					fflush(stdout);
 				}
 			}
 		}
 
-		if(opt.verb) putchar('\n');
+		if(!QUIET) putchar('\n');
 
 		if(nphot) gi_map.scale_photon_power(1.0 / (double)nphot);
 	}
@@ -508,12 +554,16 @@ Color Scene::trace_ray(const Ray &ray) const
 	Object *obj;
 
 	if((obj = cast_ray(ray, &sp))) {
+		Color color;
 		Material *mat = obj->get_material();
+
 		if(mat) {
-			return obj->get_material()->shade(ray, sp);
+			color = obj->get_material()->shade(ray, sp);
 		} else {
-			return default_mat.shade(ray, sp);
+			color = default_mat.shade(ray, sp);
 		}
+		color.w = 1.0;
+		return color;
 	}
 	return env_color;
 }

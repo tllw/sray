@@ -31,6 +31,11 @@ enum {
 	SAMPLE_SPEC_OBJ
 };
 
+struct LightPower {
+	double intensity;
+	double photon_power;
+};
+
 class Object;
 
 /** Point light source */
