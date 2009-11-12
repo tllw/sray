@@ -1,6 +1,7 @@
 #include "render.h"
 #include "tpool.h"
 #include "block.h"
+#include "timer.h"
 
 static void build_accel(long t0, long t1);
 static void shoot_photons(long t0, long t1);
@@ -9,11 +10,14 @@ static bool start_frame(long t0, long t1, bool calc_prior);
 static void render_block(void *cls);
 static void block_done(void *cls);
 static float variance(Color *samples, const Color &sum, int num, float rcp_num);
+static int rtaskcmp(const void *a, const void *b);
+static void emit_status(char st, int arg1, int arg2, int arg3, int arg4);
 
 static ThreadPool tpool;
 static Image *framebuffer;
 static Scene *scn;
 static Camera *cam;
+
 
 bool rend_init(Image *fb)
 {
@@ -36,9 +40,18 @@ void render(long msec)
 	long t0 = msec - shutter / 2;
 	long t1 = t0 + shutter;
 
+	unsigned long start_timer = 0;
+	if(BACKEND) {
+		start_timer = get_msec();
+	}
+
 	build_accel(t0, t1);
 	shoot_photons(t0, t1);
 	render_frame(t0, t1);
+
+	if(BACKEND) {
+		emit_status('d', get_msec() - start_timer, 0, 0, 0);
+	}
 }
 
 static void build_accel(long t0, long t1)
@@ -135,6 +148,10 @@ static bool start_frame(long t0, long t1, bool calc_prior)
 	int yblocks = ((opt.height << 8) / opt.blk_sz + 255) >> 8;
 	int bcount = xblocks * yblocks;
 
+	if(BACKEND) {
+		emit_status('f', xblocks, yblocks, opt.blk_sz, opt.threads);
+	}
+
 	Task *tasks = new Task[bcount];
 	Task *tptr = tasks;
 
@@ -151,9 +168,13 @@ static bool start_frame(long t0, long t1, bool calc_prior)
 			
 			if(calc_prior) {
 				// calculate gaussian priority
-				double dx = 2.0 * (double)(blk->x + blk->xsz / 2.0) / (double)opt.width - 1.0;
-				double dy = 2.0 * (double)(blk->y + blk->ysz / 2.0) / (double)opt.height - 1.0;
-				blk->pri = (int)(gaussian(dx * dx + dy * dy, 0.0, 0.3) * 500.0);
+				/*double dx = 2.0 * (double)(blk->x + blk->xsz / 2.0) / (double)opt.width - 1.0;
+				double dy = 2.0 * (double)(blk->y + blk->ysz / 2.0) / (double)opt.height - 1.0;*/
+				double dx = ((double)blk->x + (double)blk->xsz / 2.0) - (double)opt.width / 2.0;
+				double dy = ((double)blk->y + (double)blk->ysz / 2.0) - (double)opt.height / 2.0;
+				dx /= (double)opt.width * 4.0;
+				dy /= (double)opt.height * 4.0;
+				blk->pri = (int)(gaussian(dx * dx + dy * dy, 0.0, 0.01) * 200.0);
 			}
 
 			Task task(render_block, block_done, blk);
@@ -162,7 +183,7 @@ static bool start_frame(long t0, long t1, bool calc_prior)
 	}
 
 	if(calc_prior) {
-		qsort(tasks, bcount, sizeof *tasks, blkcmp);
+		qsort(tasks, bcount, sizeof *tasks, rtaskcmp);
 	}
 	tpool.add_work(tasks, bcount);
 
@@ -174,6 +195,10 @@ static void render_block(void *cls)
 {
 	struct block *blk = (struct block*)cls;
 	long ftime = blk->t0;
+
+	if(BACKEND) {
+		emit_status('s', blk->x, blk->y, blk->xsz, blk->ysz);
+	}
 
 	Color *subpix = (Color*)alloca(opt.max_samples * sizeof *subpix);
 	double *rcp_lut = (double*)alloca((1 + opt.max_samples) * sizeof *rcp_lut);
@@ -214,7 +239,7 @@ static void render_block(void *cls)
 
 			img[x] *= rcp_lut[i];
 		}
-		img += xsz;
+		img += xsz * 4;
 	}
 }
 
@@ -228,6 +253,9 @@ static void block_done(void *cls)
 		putchar('.');
 		fflush(stdout);
 	}
+	if(BACKEND) {
+		emit_status('e', blk->x, blk->y, blk->xsz, blk->ysz);
+	}
 }
 
 static float variance(Color *samples, const Color &sum, int num, float rcp_num)
@@ -239,4 +267,23 @@ static float variance(Color *samples, const Color &sum, int num, float rcp_num)
 		sqdist += (mean - samples[i]).length_sq();
 	}
 	return sqdist * rcp_num;
+}
+
+static int rtaskcmp(const void *a, const void *b)
+{
+	Task *ta = (Task*)a;
+	Task *tb = (Task*)b;
+	return blkcmp(ta->closure, tb->closure);
+}
+
+static void emit_status(char st, int arg1, int arg2, int arg3, int arg4)
+{
+	static pthread_mutex_t statmut = PTHREAD_MUTEX_INITIALIZER;
+	char buf[32] = {0};
+
+	sprintf(buf, "%c %6d %6d %6d %6d\n", st, arg1, arg2, arg3, arg4);
+
+	pthread_mutex_lock(&statmut);
+	write(1, buf, sizeof buf);
+	pthread_mutex_unlock(&statmut);
 }

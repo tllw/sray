@@ -1,10 +1,12 @@
+PREFIX = /usr/local
+
 csrc = $(wildcard src/*.c)
 ccsrc = $(wildcard src/*.cc)
 obj = $(ccsrc:.cc=.o) $(csrc:.c=.o)
 depfiles = $(obj:.o=.d)
 bin = sray
 
-#opt = -O3 -ffast-math
+opt = -O3 -ffast-math
 warn = -Wall -Wno-strict-aliasing
 dbg = -g
 #prof = -pg
@@ -39,3 +41,11 @@ clean:
 .PHONY: cleandep
 cleandep:
 	rm -f $(depfiles)
+
+.PHONY: install
+install:
+	install -m 775 $(bin) $(PREFIX)/bin/$(bin)
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(PREFIX)/bin/$(bin)
