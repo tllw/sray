@@ -89,10 +89,12 @@ static bool init()
 	signal(SIGBUS, sighandler);
 
 	// create the framebuffer
-	if(!(fb.pixels = (float*)alloc_framebuf(opt.width, opt.height))) {
+	float *pixels;
+	if(!(pixels = (float*)alloc_framebuf(opt.width, opt.height))) {
 		fprintf(stderr, "failed to allocate the framebuffer\n");
 		return false;
 	}
+	fb.create(opt.width, opt.height, pixels);
 
 	// load scene
 	scn = new Scene;
@@ -143,11 +145,9 @@ static void cleanup()
 static void output(int fnum)
 {
 	char fname[32];
-
+	
 	if(opt.num_frames > 1) {
-		char buf[32];
-
-		sprintf(buf, "frame%04d.png", fnum);
+		sprintf(fname, "frame%04d.png", fnum);
 	} else {
 		strcpy(fname, "output.png");
 	}

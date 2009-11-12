@@ -45,7 +45,7 @@ enum {
 	OPT_SHUTTER,
 	OPT_QUIET,
 	OPT_VERBOSE,
-	OPT_NOX,
+	OPT_BACKEND,
 	OPT_SOCT_MAX_DEPTH,
 	OPT_SOCT_MAX_ITEMS,
 	OPT_MOCT_MAX_DEPTH,
@@ -82,7 +82,7 @@ static struct {
 	{OPT_MOCT_MAX_ITEMS, 0, "moctitems",	"mesh octree: max items per node"},
 	{OPT_QUIET,			'q', "quiet",		"run quietly (no output)"},
 	{OPT_VERBOSE,		'v', "verbose",		"produce verbose output (add more for greater effect)"},
-	{OPT_NOX,			'x', "nogui",		"don't use X11, non-interactive mode"},
+	{OPT_BACKEND,		0, "backend",		"run as a backend, emmiting only status info"},
 	{OPT_HELP,			'h', "help",		"print usage information and exit"},
 	{0, 0, 0, 0}
 };
@@ -99,6 +99,10 @@ int parse_opt(int argc, char **argv)
 	int i, j;
 
 	default_opt();
+
+	if(strstr(argv[0], "vsray")) {
+		opt.verb = -1000;
+	}
 
 	for(i=1; i<argc; i++) {
 		int opt_num = get_opt(argv[i]);
@@ -291,8 +295,8 @@ int parse_opt(int argc, char **argv)
 			opt.verb++;
 			break;
 
-		case OPT_NOX:
-			opt.interactive = 0;
+		case OPT_BACKEND:
+			opt.verb = -1000;
 			break;
 
 		case OPT_HELP:
@@ -371,7 +375,6 @@ static void default_opt(void)
 	opt.gather_dist = 0.001;
 	opt.photon_energy = 300.0;
 	opt.verb = 0;
-	opt.interactive = 1;
 	opt.fps = 30;
 	opt.time_start = opt.time_end = 0;
 	opt.mblur = 0;
