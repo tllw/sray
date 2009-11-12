@@ -194,7 +194,7 @@ void Light::build_proj_intern(const Object **objarr, int num_obj, int t0, int t1
 	delete [] objbox;
 	delete [] caust_objbox;
 
-	if(opt.verb) {
+	if(XVERBOSE) {
 		printf("   coverage: proj(%f) spec_proj(%f)\n", projmap.get_coverage(), spec_projmap.get_coverage());
 	}
 }

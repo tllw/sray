@@ -96,5 +96,6 @@ Color Texture::get_texel(int tx, int ty) const
 		break;
 	}
 
-	return img.pixels[ty * img.xsz + tx];
+	const float *ptr = img.pixels + (ty * img.xsz + tx) * 4;
+	return Color(ptr[0], ptr[1], ptr[2], ptr[3]);
 }

@@ -15,6 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <inttypes.h>
@@ -77,4 +78,11 @@ void delete_bpool(void)
 		free(b);
 	}
 	pthread_mutex_unlock(&bpool_mut);
+}
+
+int blkcmp(const void *a, const void *b)
+{
+	int pria = ((struct block*)a)->pri;
+	int prib = ((struct block*)b)->pri;
+	return prib - pria;
 }
