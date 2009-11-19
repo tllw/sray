@@ -450,7 +450,7 @@ int Scene::build_caustics_map(int t0, int t1, int num_photons, LightPower *ltpow
 
 	for(size_t i=0; i<lights.size(); i++) {
 		// calculate the number of photons to cast from this source
-		int nphot = ceil((double)num_photons * ltpow[i].photon_power);
+		int nphot = (int)ceil((double)num_photons * ltpow[i].photon_power);
 
 		if(!QUIET) {
 			printf("light %d caustics photons (%d): ", (int)i, nphot);
@@ -495,7 +495,7 @@ int Scene::build_global_map(int t0, int t1, int num_photons, LightPower *ltpow)
 	
 	for(size_t i=0; i<lights.size(); i++) {
 		// calculate the number of photons to cast from this source
-		int nphot = ceil((double)num_photons * ltpow[i].photon_power);
+		int nphot = (int)ceil((double)num_photons * ltpow[i].photon_power);
 
 		if(!QUIET) {
 			printf("light %d gi photons (%d): ", (int)i, nphot);

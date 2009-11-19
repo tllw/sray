@@ -31,6 +31,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #define BACKEND			(opt.verb < -50)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern struct options {
 	char *scenefile;
 	int width, height;
@@ -57,9 +61,6 @@ extern struct options {
 	int num_frames;
 } opt;
 
-#ifdef __cplusplus
-extern "C" {
-#endif	/* __cplusplus */
 
 int parse_opt(int argc, char **argv);
 

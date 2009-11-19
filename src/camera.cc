@@ -28,7 +28,7 @@ static const char *type_name[] = {
 
 Camera::Camera()
 {
-	aspect = (float)opt.width / (float)opt.height;
+	aspect = (double)opt.width / (double)opt.height;
 	vfov = QUARTER_PI;
 	max_dist = RAY_MAGNITUDE;
 	shutter = opt.shutter;
@@ -46,7 +46,7 @@ bool Camera::load_xml(struct xml_node *node)
 
 	// override global shutter speed if present
 	if((attr = xml_get_attr(node, "shutter"))) {
-		shutter = attr->fval;
+		shutter = (int)attr->fval;
 	}
 
 	if((attr = xml_get_attr(node, "fov")) && (attr->type == ATYPE_FLT || attr->type == ATYPE_INT)) {
@@ -66,37 +66,37 @@ bool Camera::load_xml(struct xml_node *node)
 	return true;
 }
 
-void Camera::set_far_plane(float dist)
+void Camera::set_far_plane(double dist)
 {
 	max_dist = dist;
 }
 
-float Camera::get_far_plane() const
+double Camera::get_far_plane() const
 {
 	return max_dist;
 }
 
-void Camera::set_aspect(float aspect)
+void Camera::set_aspect(double aspect)
 {
 	this->aspect = aspect;
 }
 
-void Camera::set_vertical_fov(float fov)
+void Camera::set_vertical_fov(double fov)
 {
 	vfov = fov;
 }
 
-float Camera::get_vertical_fov() const
+double Camera::get_vertical_fov() const
 {
 	return vfov;
 }
 
-void Camera::set_horizontal_fov(float fov)
+void Camera::set_horizontal_fov(double fov)
 {
 	vfov = fov * aspect;
 }
 
-float Camera::get_horizontal_fov() const
+double Camera::get_horizontal_fov() const
 {
 	return vfov * aspect;
 }
@@ -201,13 +201,13 @@ Vector3 TargetCamera::get_target(unsigned int time) const
 	return target.get_position(time);
 }
 
-void TargetCamera::set_roll(float roll, unsigned int time)
+void TargetCamera::set_roll(double roll, unsigned int time)
 {
 	// XXX piggyback on the unused scale track of the target
 	target.set_scaling(Vector3(roll, roll, roll), time);
 }
 
-float TargetCamera::get_roll(unsigned int time) const
+double TargetCamera::get_roll(unsigned int time) const
 {
 	// XXX piggyback on the unused scale track of the target
 	return target.get_scaling(time).x;
