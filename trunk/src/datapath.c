@@ -1,8 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include "datapath.h"
+
+#if defined(WIN32) || defined(__WIN32__)
+#include <malloc.h>
+#include <io.h>
+
+#ifndef F_OK
+#define F_OK	0
+#endif
+
+int setenv(const char *name, const char *value, int overwrite);
+#else
+#include <unistd.h>
+#endif
+
 
 static struct path_node {
 	char *path;
@@ -110,3 +123,13 @@ static void free_list(struct path_node *list)
 	free(list->path);
 	free(list);
 }
+
+#if defined(WIN32) || defined(__WIN32__)
+int setenv(const char *name, const char *value, int overwrite)
+{
+	if(!overwrite && getenv(name)) {
+		return 0;
+	}
+	return SetEnvironmentVariable(name, value) ? 0 : -1;
+}
+#endif

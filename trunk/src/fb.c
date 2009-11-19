@@ -2,9 +2,15 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <limits.h>
+
+#if defined(__unix__) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#else	/* assume win32 */
+#include <windows.h>
+#endif
+
 #include "fb.h"
 
 #define FBSHM	"/srayfb.%d"
@@ -13,12 +19,14 @@
 #ifdef __GNUC__
 #define PACKED	__attribute__((packed))
 #else
-#error "define PACKED for your compiler"
+#define PACKED
 #endif
 
 /* XXX this struct must be kept in sync with struct framebuffer in
  * vsray/src/fb.h
  */
+
+#pragma pack(push, 1)
 struct fbheader {
 	int width, height;
 	int rbits, gbits, bbits, abits;
@@ -27,6 +35,7 @@ struct fbheader {
 
 	float pixels[1];
 } PACKED;
+#pragma pack(pop)
 
 
 static void *map_framebuffer(size_t fbsz);
@@ -64,6 +73,7 @@ void free_framebuf(void *fb)
 	}
 }
 
+#if defined(unix) || defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 static void *map_framebuffer(size_t fbsz)
 {
 	void *shmptr;
@@ -98,3 +108,31 @@ static void unmap_framebuffer(void *fb, size_t fbsz)
 	sprintf(shmname, FBSHM, (int)getpid());
 	shm_unlink(shmname);
 }
+#endif
+
+#if defined(WIN32) || defined(__WIN32__)
+static void *map_framebuffer(size_t fbsz)
+{
+	HANDLE fd;
+	char shmname[64];
+	void *shmptr;
+	sprintf(shmname, FBSHM, GetCurrentProcessId());
+
+	if(!(fd = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, fbsz, shmname))) {
+		fprintf(stderr, "failed to create shared memory area for the framebuffer\n");
+		return 0;
+	}
+	if(!(shmptr = MapViewOfFile(fd, 0, 0, 0, fbsz))) {
+		fprintf(stderr, "failed to map the shared memory framebuffer\n");
+	}
+	CloseHandle(fd);
+	return shmptr;
+}
+
+static void unmap_framebuffer(void *fb, size_t fbsz)
+{
+	if(fb) {
+		UnmapViewOfFile(fb);
+	}
+}
+#endif

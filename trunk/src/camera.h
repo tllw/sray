@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /** The camera class is responsible for generating primary rays */
 class Camera : public XFormNode {
 private:
-	float vfov;
-	float aspect;
-	float max_dist;
+	double vfov;
+	double aspect;
+	double max_dist;
 	int shutter;
 
 public:
@@ -36,18 +36,18 @@ public:
 
 	virtual bool load_xml(struct xml_node *node);
 
-	virtual void set_far_plane(float dist);
-	virtual float get_far_plane() const;
+	virtual void set_far_plane(double dist);
+	virtual double get_far_plane() const;
 
-	virtual void set_aspect(float aspect);
+	virtual void set_aspect(double aspect);
 
 	/** \param fov vertical field of view in radians */
-	virtual void set_vertical_fov(float fov);
-	virtual float get_vertical_fov() const;
+	virtual void set_vertical_fov(double fov);
+	virtual double get_vertical_fov() const;
 	
 	/** \param fov horizontal field of view in radians */
-	virtual void set_horizontal_fov(float fov);
-	virtual float get_horizontal_fov() const;
+	virtual void set_horizontal_fov(double fov);
+	virtual double get_horizontal_fov() const;
 
 	virtual void set_shutter(int msec);
 	virtual int get_shutter() const;
@@ -81,8 +81,8 @@ public:
 	void set_target(const Vector3 &pos, unsigned int time = 0);
 	Vector3 get_target(unsigned int time = 0) const;
 
-	void set_roll(float roll, unsigned int time = 0);
-	float get_roll(unsigned int time = 0) const;
+	void set_roll(double roll, unsigned int time = 0);
+	double get_roll(unsigned int time = 0) const;
 
 	/* get_matrix calculates and caches the matrix required to bring
 	 * primary rays to world space.

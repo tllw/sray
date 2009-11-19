@@ -26,6 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <expat.h>
 #include "xmltree.h"
 
+#ifdef _MSC_VER
+typedef int ssize_t;
+#endif
+
 struct parse_data {
 	XML_Parser parser;
 	struct xml_node *cur_node;

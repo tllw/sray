@@ -360,8 +360,8 @@ static void default_opt(void)
 	opt.height = 480;
 	opt.min_samples = 1;
 	opt.max_samples = 1;
-	opt.max_var = 0.005;
-	opt.min_energy = 0.0001;
+	opt.max_var = 0.005f;
+	opt.min_energy = 0.0001f;
 	opt.shadow_samples = 1;
 	opt.diffuse_samples = 1;
 #ifndef NO_THREADS
@@ -372,8 +372,8 @@ static void default_opt(void)
 	opt.blk_sz = 64;
 	opt.iter = 7;
 	opt.caust_photons = opt.gi_photons = 0;
-	opt.gather_dist = 0.001;
-	opt.photon_energy = 300.0;
+	opt.gather_dist = 0.001f;
+	opt.photon_energy = 300.0f;
 	opt.verb = 0;
 	opt.fps = 30;
 	opt.time_start = opt.time_end = 0;
