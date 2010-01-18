@@ -337,7 +337,7 @@ void disp(void)
 
 			float w = NORM_X(rblocks[i].w - 1);
 			float h = NORM_Y(rblocks[i].h - 1);
-			float x0 = NORM_X(rblocks[i].x + 1);
+			float x0 = NORM_X(rblocks[i].x);
 			float y0 = NORM_Y(rblocks[i].y + 1);
 			float x1 = x0 + w;
 			float y1 = y0 + h;
