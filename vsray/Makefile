@@ -5,7 +5,7 @@ bin = vsray
 
 CC = gcc
 CFLAGS = -pedantic -Wall -g
-LDFLAGS = -lGL -lX11 -lrt
+LDFLAGS = -lGL -lX11 -lrt -lm
 
 $(bin): $(obj)
 	$(CC) -o $@ $(obj) $(LDFLAGS)
