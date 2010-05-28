@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
@@ -89,7 +90,7 @@ int main(int argc, char **argv)
 
 	glDrawBuffer(GL_FRONT);
 	glClear(GL_COLOR_BUFFER_BIT);
-	
+
 	assert(glGetError() == GL_NO_ERROR);
 
 	wsys_main_loop();
@@ -228,7 +229,7 @@ void read_func(int fd)
 		case 'e':	/* end block */
 			wsys_redisplay();
 			add_dirty(args[0], args[1], args[2], args[3]);
-			
+
 			for(i=0; i<num_threads; i++) {
 				if(rblocks[i].active && rblocks[i].x == args[0] && rblocks[i].y == args[1]) {
 					rblocks[i].active = 0;
@@ -326,12 +327,12 @@ void disp(void)
 		glTexCoord2f(x0 * max_s, y1 * max_t);
 		glVertex2f(x0, y1);
 		glEnd();
-		
+
 		glDisable(GL_TEXTURE_2D);
 	}
 	num_dirty = 0;
 
-	for(i=0; i<num_threads; i++) {
+	/*for(i=0; i<num_threads; i++) {
 		if(rblocks[i].active) {
 			static const float scl = 0.2;
 
@@ -357,7 +358,7 @@ void disp(void)
 			glVertex2f(x0, y1); glVertex2f(x0, y1 - scl * h);
 			glEnd();
 		}
-	}
+	}*/
 
 	glFlush();
 	assert(glGetError() == GL_NO_ERROR);
