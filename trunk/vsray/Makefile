@@ -1,3 +1,5 @@
+PREFIX = /usr/local
+
 src = $(wildcard src/*.c)
 obj = $(src:.c=.o)
 dep = $(obj:.o=.d)
@@ -22,3 +24,11 @@ clean:
 .PHONY: cleandep
 cleandep:
 	rm -f $(dep)
+
+.PHONY: install
+install:
+	install -m 775 $(bin) $(PREFIX)/bin/$(bin)
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(PREFIX)/bin/$(bin)

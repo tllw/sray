@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PROJMAP_H_
 
 #include <vector>
-#include <vmath.h>
+#include <vmath/vmath.h>
 
 /** ProjMap is used by lights to project the bounding spheres of scene objects
  * to a sphere around the light, to select directions for photon shooting that

@@ -30,10 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <lib3ds/light.h>
 
 enum {
-	MESHES 		= 1,
-	LIGHTS 		= 2,
-	CAMERAS 	= 4,
-	MATERIALS 	= 8,
+	MESHES		= 1,
+	LIGHTS		= 2,
+	CAMERAS		= 4,
+	MATERIALS	= 8,
 	ENV			= 16
 };
 
@@ -222,7 +222,7 @@ int write_objects(Lib3dsFile *file, FILE *out)
 		}
 
 		fprintf(out, "\t<object name=\"%s\" type=\"mesh\">\n", m->name);
-		
+
 		/* material reference */
 		if(m->faceL[0].material && *m->faceL[0].material) {
 			fprintf(out, "\t\t<matref name=\"%s\"/>\n", m->faceL[0].material);
@@ -261,7 +261,7 @@ int write_objects(Lib3dsFile *file, FILE *out)
 
 		for(i=0; i<m->faces; i++) {
 			fprintf(out, "\t\t\t<face id=\"%d\">\n", i);
-			
+
 			for(j=0; j<3; j++) {
 				int idx = m->faceL[i].points[j];
 				int nidx = i * 3 + j;
@@ -270,6 +270,8 @@ int write_objects(Lib3dsFile *file, FILE *out)
 			fprintf(out, "\t\t\t</face>\n");
 		}
 		fprintf(out, "\t\t</mesh>\n");
+
+		free(norm);
 
 		fprintf(out, "\t</object>\n");
 		m = m->next;
@@ -285,7 +287,7 @@ int write_camera(Lib3dsFile *file, FILE *out)
 	if(!c) return -1;
 
 	fprintf(out, "\n\t<!-- camera -->\n");
-	
+
 	fprintf(out, "\t<camera type=\"target\" fov=\"%.3f\">\n", c->fov / 1.3333333);
 	fprintf(out, "\t\t<xform pos=\"%.3f %.3f %.3f\"/>\n", c->position[0], c->position[2], c->position[1]);
 	fprintf(out, "\t\t<target>\n");

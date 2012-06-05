@@ -47,7 +47,7 @@ private:
 #ifdef __GNUC__
 	typedef __gnu_cxx::hash_map<pthread_t, int> hash_table;
 #else
-	typedef stdext::hash_map<pthread_t, int> hash_table;
+	typedef std::hash_map<pthread_t, int> hash_table;
 #endif
 	mutable hash_table thread_id_map;
 #endif

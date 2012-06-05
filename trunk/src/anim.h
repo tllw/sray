@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 #include <algorithm>
-#include "vmath.h"
+#include <vmath/vmath.h>
 #include "cacheman.h"
 #include "xmltree.h"
 

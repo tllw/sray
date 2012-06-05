@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef COLOR_H_
 #define COLOR_H_
 
-#include <vmath.h>
+#include <vmath/vmath.h>
 
 typedef Vector4 Color;
 

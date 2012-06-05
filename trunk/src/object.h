@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef OBJECT_H_
 #define OBJECT_H_
 
-#include <vmath.h>
+#include <vmath/vmath.h>
 #include "anim.h"
 #include "material.h"
 #include "aabb.h"
