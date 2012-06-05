@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <stdlib.h>
-#include <imago.h>
+#include <imago2.h>
 #include "img.h"
 
 Image::Image()
@@ -63,17 +63,14 @@ void Image::destroy()
 
 bool Image::load(const char *fname)
 {
-	set_image_option(IMG_OPT_FLOAT, 1);
-	set_image_option(IMG_OPT_ALPHA, 1);
-
 	float *imgbuf;
-	if(!(imgbuf = (float*)load_image(fname, &xsz, &ysz))) {
+	if(!(imgbuf = (float*)img_load_pixels(fname, &xsz, &ysz, IMG_FMT_RGBAF))) {
 		return false;
 	}
 
 	float *newpix = new float[4 * xsz * ysz];
 	memcpy(newpix, imgbuf, 4 * xsz * ysz * sizeof *newpix);
-	free_image(imgbuf);
+	img_free_pixels(imgbuf);
 
 	delete [] pixels;
 	pixels = newpix;
@@ -82,10 +79,7 @@ bool Image::load(const char *fname)
 
 bool Image::save(const char *fname, bool alpha) const
 {
-	set_image_option(IMG_OPT_ALPHA, alpha ? 1 : 0);
-	set_image_option(IMG_OPT_FLOAT, 1);
-
-	return save_image(fname, pixels, xsz, ysz, IMG_FMT_AUTO) != -1;
+	return img_save_pixels(fname, pixels, xsz, ysz, IMG_FMT_RGBAF) != -1;
 }
 
 bool Image::set_pixels(int xsz, int ysz, const float *pixels)
@@ -93,7 +87,7 @@ bool Image::set_pixels(int xsz, int ysz, const float *pixels)
 	if(!create(xsz, ysz)) {
 		return false;
 	}
-	
+
 	memcpy(this->pixels, pixels, xsz * ysz * 4 * sizeof *pixels);
 	return true;
 }
