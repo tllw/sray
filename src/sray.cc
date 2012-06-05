@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 
 	if(!QUIET) {
 		unsigned long msec, sec, min;
-		
+
 		msec = get_msec() - start;
 		sec = msec / 1000;
 		msec -= sec * 1000;
