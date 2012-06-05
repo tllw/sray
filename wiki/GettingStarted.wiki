@@ -22,6 +22,7 @@ First download and install all dependencies listed above. Then just change into 
 = Usage =
 Type ./sray -h to get usage information.
 A few [http://apricot.hep.ntua.gr/~nuclear/sray/sray-examples.tar.gz test scenes] are provided to get you started.
+Or alternatively a [http://apricot.hep.ntua.gr/~nuclear/sray/sray-moreexamples.tar.gz larger package of test scenes].
 
 
 = Tools =
